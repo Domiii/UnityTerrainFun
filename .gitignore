@@ -1,0 +1,9 @@
+*
+!.gitattributes
+!.gitignore
+!readme.md
+!.gitkeep
+!*.cs
+!*.js
+!*/
+Assets/Standard Assets
