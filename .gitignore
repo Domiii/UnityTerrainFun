@@ -1,3 +1,5 @@
+# white list approach: Ignore everything, and un-ignore specific files/folders:
+
 *
 !.gitattributes
 !.gitignore
@@ -6,4 +8,7 @@
 !*.cs
 !*.js
 !*/
+!Assets/DefaultScene.unity
+!Assets/Maze/*
+!Assets/Terrain/*
 Assets/Standard Assets
