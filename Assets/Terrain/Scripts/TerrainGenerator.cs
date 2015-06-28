@@ -55,7 +55,13 @@ public class TerrainGenerator : MonoBehaviour
 	Vector2 m_offset;
 	
 	void Start() {
-		Generate ();
+		if (!IsGenerated()) {
+			Generate ();
+		}
+	}
+
+	public bool IsGenerated() {
+		return m_terrain && m_terrain.terrainData;
 	}
 
 	/// <summary>
@@ -120,9 +126,13 @@ public class TerrainGenerator : MonoBehaviour
 		
 		CreateProtoTypes();
 
+		// compute heigh maps
 		FillHeights(htmap);
 
+
+		// start generating terrain data
 		TerrainData terrainData = m_terrain.terrainData = new TerrainData();
+		GetComponent<TerrainCollider> ().terrainData = m_terrain.terrainData;	// also set collider's data
 
 		terrainData.heightmapResolution = m_heightMapSize;
 		terrainData.SetHeights(0, 0, htmap);
