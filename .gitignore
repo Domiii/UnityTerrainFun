@@ -1,14 +1,41 @@
-# white list approach: Ignore everything, and un-ignore specific files/folders:
+/*
+/*/
 
-*
-!.gitattributes
-!.gitignore
-!readme.md
-!.gitkeep
-!*.cs
-!*.js
-!*/
-!Assets/DefaultScene.unity
-!Assets/Maze/*
-!Assets/Terrain/*
-Assets/Standard Assets
+!/Assets/
+/Assets/Standard Assets*
+
+
+# OS generated files #
+##########################################################
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+*~
+
+# Other auto-generated files #
+##########################################################
+*.log
+
+
+### SublimeText ###
+# cache files for sublime text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+
+# workspace files are user-specific
+*.sublime-workspace
+
+# project files should be checked into the repository, unless a significant
+# proportion of contributors will probably not be using SublimeText
+# *.sublime-project
+
+# sftp configuration file
+sftp-config.json
