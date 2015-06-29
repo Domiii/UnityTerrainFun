@@ -17,12 +17,12 @@ public class Player : Unit {
 	}
 
 	// Use this for initialization
-	protected virtual void Start () {
+	protected override void Start () {
 		base.Start ();
 	}
 	
 	// Update is called once per frame
-	protected virtual void Update () {
+	protected override void Update () {
 		base.Update ();
 	}
 }

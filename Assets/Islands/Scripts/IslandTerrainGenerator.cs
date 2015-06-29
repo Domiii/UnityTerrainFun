@@ -11,12 +11,13 @@ public class IslandTerrainGenerator : MonoBehaviour
 	public Texture2D m_detail0, m_detail1, m_detail2;
 	public GameObject[] m_treeObjects;
 
-	//Noise settings. A higher frq will create larger scale details. Each seed value will create a unique look
+	// Noise seeds
 	public int m_groundSeed = 0;
 	public int m_mountainSeed = 1;
 	public int m_treeSeed = 2;
 	public int m_detailSeed = 3;
 
+	// Noise parameters: A higher frq will create larger scale details
 	public float m_groundFrq = 800.0f;
 	public float  m_mountainFrq = 1200.0f;
 	public float  m_treeFrq = 400.0f;
@@ -229,8 +230,6 @@ public class IslandTerrainGenerator : MonoBehaviour
 	{
 		float[,,] map  = new float[m_alphaMapSize, m_alphaMapSize, 2];
 		
-		Random.seed = 0;
-		
 		for(int x = 0; x < m_alphaMapSize; x++) 
 		{
 			for (int z = 0; z < m_alphaMapSize; z++) 
@@ -258,8 +257,6 @@ public class IslandTerrainGenerator : MonoBehaviour
 	
 	void FillTreeInstances(Terrain terrain)
 	{
-		Random.seed = 0;
-		
 		if (m_treeProtoTypes.Length == 0) return; 	// no trees available
 		
 		for(int x = 0; x < m_terrainSize; x += m_treeSpacing) 
@@ -323,8 +320,6 @@ public class IslandTerrainGenerator : MonoBehaviour
 		int[,] detailMap2 = new int[m_detailMapSize,m_detailMapSize];
 		
 		float ratio = (float)m_terrainSize/(float)m_detailMapSize;
-		
-		Random.seed = 0;
 		
 		for(int x = 0; x < m_detailMapSize; x++) 
 		{

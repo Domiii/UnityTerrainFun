@@ -3,11 +3,7 @@ using System.Collections;
 
 [RequireComponent(typeof(NavMeshAgent))]
 public class AIAgent : Unit {
-	public Color HighlighColor = Color.yellow;
-	
 	private NavMeshAgent navMeshAgent;
-
-	private Color originalColor;
 	
 	protected AIAgent() {
 	}
@@ -17,16 +13,12 @@ public class AIAgent : Unit {
 		set { navMeshAgent = value; }
 	}
 	
-	protected virtual void Reset() {
-
-	}
-	
-	protected virtual void Start() {
+	protected override void Start() {
 		navMeshAgent = GetComponent<NavMeshAgent>();
 		base.Start ();
 	}
 	
-	protected virtual void Update() {
+	protected override void Update() {
 		//IsSelected = !IsSelected;
 		if (Input.GetButton("Fire1")) {
 			RaycastHit hit;

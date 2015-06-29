@@ -2,15 +2,23 @@
 using System.Collections;
 
 public class Sun : MonoBehaviour {
+	/// <summary>
+	/// Virtual time of day from 0 = 00:00 to 1 = 00:00 on the next day
+	/// </summary>
 	[HideInInspector]
 	public float VirtualTimeOfDay;
 	public float RealSecondsPerDay = 10;
+	public Vector3 StartingRotation = new Vector3 (20, 0, 0);
+	public Vector3 AxisOfRotation = new Vector3(0, -1, 1);
+	public float TimeOfDayOverride = 0;
 
 	// Use this for initialization
 	void Start () {
 		// get current time of day
 		var systemTimeOfDay = System.DateTime.Now.TimeOfDay;
 		VirtualTimeOfDay = (float)systemTimeOfDay.TotalDays;
+		
+		AxisOfRotation.Normalize(); // normalize axis
 	}
 	
 	// Update is called once per frame
@@ -23,6 +31,10 @@ public class Sun : MonoBehaviour {
 
 		// update rotation
 		//transform.localRotation = 
-		transform.localRotation = Quaternion.Euler(new Vector3(360 * VirtualTimeOfDay,-240,170));
+		//transform.localRotation = Quaternion.Euler(new Vector3(360 * VirtualTimeOfDay,-240,170));
+
+		//transform.localRotation = Quaternion.AngleAxis(360 * VirtualTimeOfDay, AxisOfRotation);
+		//transform.localRotation = Quaternion.Euler(AxisOfRotation)
+		transform.localRotation = Quaternion.Euler (StartingRotation) * Quaternion.AngleAxis(TimeOfDayOverride, AxisOfRotation);
 	}
 }
