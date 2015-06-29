@@ -9,7 +9,7 @@ public class TerrainGenerator : MonoBehaviour
 	public float m_splatTileSize0 = 10.0f;
 	public float m_splatTileSize1 = 2.0f;
 	public Texture2D m_detail0, m_detail1, m_detail2;
-	public GameObject m_tree0, m_tree1, m_tree2;
+	public GameObject[] m_treeObjects;
 	//Noise settings. A higher frq will create larger scale details. Each seed value will create a unique look
 	public int m_groundSeed = 0;
 	public float m_groundFrq = 800.0f;
@@ -162,23 +162,22 @@ public class TerrainGenerator : MonoBehaviour
 		m_splatPrototypes = new SplatPrototype[2];
 		
 		m_splatPrototypes[0] = new SplatPrototype();
-		m_splatPrototypes[0].texture = m_splat0;
+		m_splatPrototypes[0].texture = m_splat1;
 		m_splatPrototypes[0].tileSize = new Vector2(m_splatTileSize0, m_splatTileSize0);
 		
 		m_splatPrototypes[1] = new SplatPrototype();
-		m_splatPrototypes[1].texture = m_splat1;
+		m_splatPrototypes[1].texture = m_splat0;
 		m_splatPrototypes[1].tileSize = new Vector2(m_splatTileSize1, m_splatTileSize1);
-		
-		m_treeProtoTypes = new TreePrototype[3];
-		
-		m_treeProtoTypes[0] = new TreePrototype();
-		m_treeProtoTypes[0].prefab = m_tree0;
-		
-		m_treeProtoTypes[1] = new TreePrototype();
-		m_treeProtoTypes[1].prefab = m_tree1;
-		
-		m_treeProtoTypes[2] = new TreePrototype();
-		m_treeProtoTypes[2].prefab = m_tree2;
+
+		if (m_treeObjects == null) {
+			m_treeObjects = new GameObject[0];
+		}
+		m_treeProtoTypes = new TreePrototype[m_treeObjects.Length];
+
+		for (var i = 0; i < m_treeObjects.Length; ++i) {
+			m_treeProtoTypes[i] = new TreePrototype();
+			m_treeProtoTypes[i].prefab = m_treeObjects[i];
+		}
 		
 		m_detailProtoTypes = new DetailPrototype[3];
 
@@ -257,6 +256,8 @@ public class TerrainGenerator : MonoBehaviour
 	void FillTreeInstances(Terrain terrain)
 	{
 		Random.seed = 0;
+
+		if (m_treeProtoTypes.Length == 0) return; 	// no trees available
 	
 		for(int x = 0; x < m_terrainSize; x += m_treeSpacing) 
 		{

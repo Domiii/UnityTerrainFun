@@ -2,14 +2,14 @@ using UnityEngine;
 using System.Collections;
 using UnityEditor;
 
-[CustomEditor(typeof(TerrainGenerator))]
-public class TerrainGeneratorEditor : Editor
+[CustomEditor(typeof(IslandTerrainGenerator))]
+public class IslandTerrainGeneratorEditor : Editor
 {
 	public override void OnInspectorGUI()
 	{
 		DrawDefaultInspector();
 		
-		var script = (TerrainGenerator)target;
+		var script = (IslandTerrainGenerator)target;
 		
 		if(GUILayout.Button("Randomize"))
 		{

@@ -1,42 +1,30 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-[RequireComponent(typeof(NavMeshAgent))]
 public class Unit : MonoBehaviour {
 	public Color HighlighColor = Color.yellow;
 
-	private NavMeshAgent agent;
-	private new Renderer renderer;
+	protected new Renderer renderer;
 
 	private bool isSelected;
 	private Color originalColor;
 
-	Unit() {
+	protected Unit() {
 	}
 
-	public NavMeshAgent Agent {
-		get { return agent; }
-		set { agent = value; }
-	}
-	
-	protected void Reset() {
-		Debug.Log("Reset: " + name);
-	}
-
-	protected void Start() {
-		agent = GetComponent<NavMeshAgent>();
+	protected virtual void Start() {
 		renderer = GetComponent<Renderer> ();
 	}
 
-	protected void Update() {
-		//IsSelected = !IsSelected;
-		if (Input.GetButton("Fire1")) {
-			RaycastHit hit;
-			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-			if (Physics.Raycast(ray, out hit)) {
-				agent.SetDestination(hit.point);
-			}
-		}
+	protected virtual void Update() {
+//		//IsSelected = !IsSelected;
+//		if (Input.GetButton("Fire1")) {
+//			RaycastHit hit;
+//			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+//			if (Physics.Raycast(ray, out hit)) {
+//				agent.SetDestination(hit.point);
+//			}
+//		}
 	}
 
 	public bool IsSelected {
