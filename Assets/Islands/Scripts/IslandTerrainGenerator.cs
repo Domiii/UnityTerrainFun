@@ -1,13 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-
+/// <summary>
+/// 
+/// </summary>
+/// <see cref="http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/">For inspiration</see>
 public class IslandTerrainGenerator : MonoBehaviour 
 {
 	//Prototypes
-	public Texture2D m_splat0, m_splat1;
-	public float m_splatTileSize0 = 10.0f;
-	public float m_splatTileSize1 = 2.0f;
+	public SerializableSplatPrototype[] m_splatMapPrototypes;
 	public Texture2D m_detail0, m_detail1, m_detail2;
 	public GameObject[] m_treeObjects;
 
@@ -28,7 +29,6 @@ public class IslandTerrainGenerator : MonoBehaviour
 	public float m_baseMapDist = 1000.0f; //The distance at which the low res base map will be drawn. Decrease to increase performance
 	//Terrain data settings
 	public int m_heightMapSize = 1025; //Higher number will create more detailed height maps
-	public int m_alphaMapSize = 1024; //This is the control map that controls how the splat textures will be blended
 	public int m_terrainSize = 512;
 	public int m_terrainHeight = 512;
 	public int m_detailMapSize = 512; //Resolutions of detail (Grass) layers
@@ -53,15 +53,18 @@ public class IslandTerrainGenerator : MonoBehaviour
 	//Private
 	PerlinNoise m_groundNoise, m_mountainNoise, m_treeNoise, m_detailNoise;
 	Terrain m_terrain;
-	SplatPrototype[] m_splatPrototypes;
+	int m_alphaMapSize;  //This is the control map that controls how the splat textures will be blended
+	SplatPrototype[] m_actualSplatPrototypes;
 	TreePrototype[] m_treeProtoTypes;
 	DetailPrototype[] m_detailProtoTypes;
 	Vector2 m_offset;
 	
 	void Start() {
+		m_terrain = GetComponent<Terrain>();
 		if (!IsGenerated()) {
 			Generate ();
 		}
+		Debug.Log (m_terrain.terrainData.alphamapHeight);
 	}
 	
 	public bool IsGenerated() {
@@ -93,11 +96,15 @@ public class IslandTerrainGenerator : MonoBehaviour
 	public void Generate() {
 		m_terrain = GetComponent<Terrain>();
 		Clear ();
-		
+
+		// Create noise generators
 		m_groundNoise = new PerlinNoise(m_groundSeed);
 		m_mountainNoise = new PerlinNoise(m_mountainSeed);
 		m_treeNoise = new PerlinNoise(m_treeSeed);
 		m_detailNoise = new PerlinNoise(m_detailSeed);
+
+		// alpha map size must be height map size apparently
+		m_alphaMapSize = m_heightMapSize;
 		
 		if(!Mathf.IsPowerOfTwo(m_heightMapSize-1))
 		{
@@ -141,7 +148,7 @@ public class IslandTerrainGenerator : MonoBehaviour
 		terrainData.heightmapResolution = m_heightMapSize;
 		terrainData.SetHeights(0, 0, htmap);
 		terrainData.size = new Vector3(m_terrainSize, m_terrainHeight, m_terrainSize);
-		terrainData.splatPrototypes = m_splatPrototypes;
+		terrainData.splatPrototypes = m_actualSplatPrototypes;
 		terrainData.treePrototypes = m_treeProtoTypes;
 		terrainData.detailPrototypes = m_detailProtoTypes;
 		
@@ -163,15 +170,15 @@ public class IslandTerrainGenerator : MonoBehaviour
 		//Ive hard coded 2 splat prototypes, 3 tree prototypes and 3 detail prototypes.
 		//This is a little inflexible way to do it but it made the code simpler and can easly be modified 
 		
-		m_splatPrototypes = new SplatPrototype[2];
-		
-		m_splatPrototypes[0] = new SplatPrototype();
-		m_splatPrototypes[0].texture = m_splat1;
-		m_splatPrototypes[0].tileSize = new Vector2(m_splatTileSize0, m_splatTileSize0);
-		
-		m_splatPrototypes[1] = new SplatPrototype();
-		m_splatPrototypes[1].texture = m_splat0;
-		m_splatPrototypes[1].tileSize = new Vector2(m_splatTileSize1, m_splatTileSize1);
+		m_actualSplatPrototypes = new SplatPrototype[m_splatMapPrototypes.Length];
+
+		for (var i = 0; i < m_splatMapPrototypes.Length; ++i) {
+			m_actualSplatPrototypes[i] = new SplatPrototype{
+				texture = m_splatMapPrototypes[i].texture,
+				tileSize = m_splatMapPrototypes[i].tileSize,
+				tileOffset = m_splatMapPrototypes[i].tileOffset
+			};
+		}
 		
 		if (m_treeObjects == null) {
 			m_treeObjects = new GameObject[0];
@@ -225,7 +232,12 @@ public class IslandTerrainGenerator : MonoBehaviour
 			}
 		}
 	}
-	
+
+	/// <summary>
+	/// This method decides where how much of each texture can be seen.
+	/// </summary>
+	/// <see cref="https://alastaira.wordpress.com/2013/11/14/procedural-terrain-splatmapping/"/>
+	/// <param name="terrainData">Terrain data.</param>
 	void FillAlphaMap(TerrainData terrainData) 
 	{
 		float[,,] map  = new float[m_alphaMapSize, m_alphaMapSize, 2];
@@ -245,12 +257,14 @@ public class IslandTerrainGenerator : MonoBehaviour
 				// Steepness is given as an angle, 0..90 degrees. Divide
 				// by 90 to get an alpha blending value in the range 0..1.
 				float frac = angle / 90.0f;
-				map[z, x, 0] = frac;
-				map[z, x, 1] = 1.0f - frac;
-				
+				if (angle < 30) {
+					frac = 0;
+				}
+				map[z, x, 0] = 1.0f - frac;
+				map[z, x, 1] = frac;
 			}
 		}
-		
+
 		terrainData.alphamapResolution = m_alphaMapSize;
 		terrainData.SetAlphamaps(0, 0, map);
 	}
