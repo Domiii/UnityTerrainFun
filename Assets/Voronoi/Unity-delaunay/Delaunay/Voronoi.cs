@@ -35,34 +35,8 @@ namespace Delaunay
 		public Rect plotBounds {
 			get { return _plotBounds;}
 		}
-		
-		public void Dispose ()
-		{
-			int i, n;
-			if (_sites != null) {
-				_sites.Dispose ();
-				_sites = null;
-			}
-			if (_triangles != null) {
-				n = _triangles.Count;
-				for (i = 0; i < n; ++i) {
-					_triangles [i].Dispose ();
-				}
-				_triangles.Clear ();
-				_triangles = null;
-			}
-			if (_edges != null) {
-				n = _edges.Count;
-				for (i = 0; i < n; ++i) {
-					_edges [i].Dispose ();
-				}
-				_edges.Clear ();
-				_edges = null;
-			}
-//			_plotBounds = null;
-			_sitesIndexedByLocation = null;
-		}
-		
+
+		#region Construction + Initialization
 		public Voronoi (List<Vector2> points, List<uint> colors, Rect plotBounds)
 		{
 			Reset (points, colors, plotBounds);
@@ -96,12 +70,13 @@ namespace Delaunay
 			_sites.Add (site);
 			_sitesIndexedByLocation [p] = site;
 		}
+		#endregion
 
 
 		// TODO: Change to property
-		public List<Edge> Edges ()
+		public List<Edge> Edges
 		{
-			return _edges;
+			get { return _edges; }
 		}
 		
 		public SiteList Sites
@@ -466,6 +441,36 @@ namespace Delaunay
 				voronoi = new Voronoi(newPoints, newColors, _plotBounds);
 			}
 			return voronoi;
+		}
+		#endregion
+
+
+		#region Dispose
+		public void Dispose ()
+		{
+			int i, n;
+			if (_sites != null) {
+				_sites.Dispose ();
+				_sites = null;
+			}
+			if (_triangles != null) {
+				n = _triangles.Count;
+				for (i = 0; i < n; ++i) {
+					_triangles [i].Dispose ();
+				}
+				_triangles.Clear ();
+				_triangles = null;
+			}
+			if (_edges != null) {
+				n = _edges.Count;
+				for (i = 0; i < n; ++i) {
+					_edges [i].Dispose ();
+				}
+				_edges.Clear ();
+				_edges = null;
+			}
+			//			_plotBounds = null;
+			_sitesIndexedByLocation = null;
 		}
 		#endregion
 	}

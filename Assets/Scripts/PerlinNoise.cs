@@ -210,7 +210,7 @@ public class PerlinNoise
 		
 		for(int i = 0; i < octNum; i++)
 		{
-			sum += Noise2D(x*gain/frq, y*gain/frq) * amp/gain;
+			sum += Noise2D(x*gain*frq, y*gain*frq) * amp/gain;
 			gain *= 2.0f;
 		}
 		return sum;

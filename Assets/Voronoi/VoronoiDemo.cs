@@ -6,8 +6,7 @@ using Delaunay.Geo;
 public class VoronoiDemo : MonoBehaviour
 {
 	[SerializeField]
-	private int
-		m_pointCount = 300;
+	private int m_pointCount = 300;
 
 	private List<Vector2> m_points;
 	private float m_mapWidth = 100;
@@ -31,10 +30,6 @@ public class VoronoiDemo : MonoBehaviour
 
 	public void Gen ()
 	{
-		if (m_voronoi != null) {
-			m_voronoi.Dispose();
-		}
-
 		List<uint> colors = new List<uint> ();
 		m_points = new List<Vector2> ();
 			
@@ -44,6 +39,10 @@ public class VoronoiDemo : MonoBehaviour
 					UnityEngine.Random.Range (0, m_mapWidth),
 					UnityEngine.Random.Range (0, m_mapHeight))
 			);
+		}
+
+		if (m_voronoi != null) {
+			m_voronoi.Dispose();
 		}
 
 		m_voronoi = new Delaunay.Voronoi (m_points, colors, new Rect (0, 0, m_mapWidth, m_mapHeight));
@@ -114,6 +113,7 @@ public class VoronoiDemo : MonoBehaviour
 			}
 		}
 
+		// draw bounding box (yellow)
 		Gizmos.color = Color.yellow;
 		Gizmos.DrawLine (new Vector2 (0, 0), new Vector2 (0, m_mapHeight));
 		Gizmos.DrawLine (new Vector2 (0, 0), new Vector2 (m_mapWidth, 0));
