@@ -10,12 +10,12 @@ namespace Delaunay
 	public sealed class Site: ICoord, IComparable
 	{
 		private static Stack<Site> _pool = new Stack<Site> ();
-		public static Site Create (Vector2 p, uint index, float weight, uint color)
+		public static Site Create (Vector2 p, uint index, float weight, uint color, int id)
 		{
 			if (_pool.Count > 0) {
-				return _pool.Pop ().Init (p, index, weight, color);
+				return _pool.Pop ().Init (p, index, weight, color, id);
 			} else {
-				return new Site (p, index, weight, color);
+				return new Site (p, index, weight, color, id);
 			}
 		}
 		
@@ -70,8 +70,9 @@ namespace Delaunay
 		public Vector2 Coord {
 			get { return _coord;}
 		}
-		
-		public uint color;
+
+		public int id { get; private set;}
+		public uint color { get; private set;}
 		public float weight;
 		
 		private uint _siteIndex;
@@ -86,19 +87,20 @@ namespace Delaunay
 		// ordered list of points that define the region clipped to bounds:
 		private List<Vector2> _region;
 
-		private Site (Vector2 p, uint index, float weight, uint color)
+		private Site (Vector2 p, uint index, float weight, uint color, int id)
 		{
 //			if (lock != PrivateConstructorEnforcer)
 //			{
 //				throw new Error("Site constructor is private");
 //			}
-			Init (p, index, weight, color);
+			Init (p, index, weight, color, id);
 		}
 		
-		private Site Init (Vector2 p, uint index, float weight, uint color)
+		private Site Init (Vector2 p, uint index, float weight, uint color, int id)
 		{
 			_coord = p;
 			_siteIndex = index;
+			this.id = id;
 			this.weight = weight;
 			this.color = color;
 			_edges = new List<Edge> ();
@@ -160,24 +162,26 @@ namespace Delaunay
 			return _edges [0];
 		}
 		
-		public List<Site> NeighborSites ()
+		public List<Site> GetNeighborSites ()
 		{
 			if (_edges == null || _edges.Count == 0) {
 				return new List<Site> ();
 			}
 			if (_edgeOrientations == null) { 
+				// initialize additional region information
 				ReorderEdges ();
 			}
+
 			List<Site> list = new List<Site> ();
 			Edge edge;
 			for (int i = 0; i < _edges.Count; i++) {
 				edge = _edges [i];
-				list.Add (NeighborSite (edge));
+				list.Add (GetNeighborSite (edge));
 			}
 			return list;
 		}
 			
-		private Site NeighborSite (Edge edge)
+		private Site GetNeighborSite (Edge edge)
 		{
 			if (this == edge.leftSite) {
 				return edge.rightSite;
@@ -188,7 +192,7 @@ namespace Delaunay
 			return null;
 		}
 		
-		internal List<Vector2> Region (Rect clippingBounds)
+		internal List<Vector2> GetRegion (Rect clippingBounds)
 		{
 			if (_edges == null || _edges.Count == 0) {
 				return new List<Vector2> ();

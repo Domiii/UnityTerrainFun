@@ -39,11 +39,11 @@ namespace Delaunay
 			return segments;
 		}
 
-		public static List<Edge> SelectEdgesForSitePoint (Vector2 coord, List<Edge> edgesToTest)
+		public static List<Edge> SelectEdgesForSitePoint (uint id, List<Edge> edgesToTest)
 		{
 			return edgesToTest.FindAll (delegate (Edge edge) {
-				return ((edge.leftSite != null && edge.leftSite.Coord == coord)
-					|| (edge.rightSite != null && edge.rightSite.Coord == coord));
+				return ((edge.leftSite != null && edge.leftSite.id == id)
+				        || (edge.rightSite != null && edge.rightSite.id == id));
 			});
 		}
 

@@ -15,6 +15,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Delaunay.Geo;
 using Delaunay.Utils;
 using Delaunay.LR;
@@ -25,6 +26,7 @@ namespace Delaunay
 	{
 		private SiteList _sites;
 		private Dictionary <Vector2,Site> _sitesIndexedByLocation;
+		private List<Site> _sitesIndexedById;
 		private List<Triangle> _triangles;
 		private List<Edge> _edges;
 
@@ -46,6 +48,7 @@ namespace Delaunay
 		{
 			_sites = new SiteList ();
 			_sitesIndexedByLocation = new Dictionary <Vector2,Site> (); // XXX: Used to be Dictionary(true) -- weak refs. 
+			_sitesIndexedById = new List<Site>();
 			AddSites (points, colors);
 			_plotBounds = plotBounds;
 			_triangles = new List<Triangle> ();
@@ -66,9 +69,12 @@ namespace Delaunay
 			if (_sitesIndexedByLocation.ContainsKey (p))
 				return; // Prevent duplicate site! (Adapted from https://github.com/nodename/as3delaunay/issues/1)
 			float weight = UnityEngine.Random.value * 100f;
-			Site site = Site.Create (p, (uint)index, weight, color);
+			var id = _sitesIndexedById.Count+1;
+
+			Site site = Site.Create (p, (uint)index, weight, color, id);
 			_sites.Add (site);
 			_sitesIndexedByLocation [p] = site;
+			_sitesIndexedById[id] = site;
 		}
 		#endregion
 
@@ -88,30 +94,23 @@ namespace Delaunay
 		/// Get vertices of the site containing the given point.
 		/// </summary>
 		/// <param name="p"></param>
-		public List<Vector2> Region (Vector2 p)
+		public List<Vector2> GetRegion (int id)
 		{
-			Site site = _sitesIndexedByLocation [p];
-			if (site == null) {
+			if (_sitesIndexedById.Count <= id)
 				return new List<Vector2> ();
-			}
-			return site.Region (_plotBounds);
+
+			Site site = _sitesIndexedById[id];
+			return site.GetRegion (_plotBounds);
 		}
 
 		// TODO: bug: if you call this before you call region(), something goes wrong :(
-		public List<Vector2> NeighborSitesForSite (Vector2 coord)
+		public List<Site> GetNeighborSitesForSite (int id)
 		{
-			List<Vector2> points = new List<Vector2> ();
-			Site site = _sitesIndexedByLocation [coord];
-			if (site == null) {
-				return points;
-			}
-			List<Site> sites = site.NeighborSites ();
-			Site neighbor;
-			for (int nIndex =0; nIndex<sites.Count; nIndex++) {
-				neighbor = sites [nIndex];
-				points.Add (neighbor.Coord);
-			}
-			return points;
+			if (_sitesIndexedById.Count <= id)
+				return new List<Site> ();
+
+			Site site = _sitesIndexedById [id];
+			return site.GetNeighborSites ();
 		}
 
 		public List<Circle> Circles ()
@@ -119,14 +118,14 @@ namespace Delaunay
 			return _sites.Circles ();
 		}
 		
-		public List<LineSegment> VoronoiBoundaryForSite (Vector2 coord)
+		public List<LineSegment> GetVoronoiBoundaryForSite (uint id)
 		{
-			return DelaunayHelpers.VisibleLineSegments (DelaunayHelpers.SelectEdgesForSitePoint (coord, _edges));
+			return DelaunayHelpers.VisibleLineSegments (DelaunayHelpers.SelectEdgesForSitePoint (id, _edges));
 		}
 
-		public List<LineSegment> DelaunayLinesForSite (Vector2 coord)
+		public List<LineSegment> GetDelaunayLinesForSite (uint id)
 		{
-			return DelaunayHelpers.DelaunayLinesForEdges (DelaunayHelpers.SelectEdgesForSitePoint (coord, _edges));
+			return DelaunayHelpers.DelaunayLinesForEdges (DelaunayHelpers.SelectEdgesForSitePoint (id, _edges));
 		}
 		
 		public List<LineSegment> VoronoiDiagram ()
@@ -151,7 +150,7 @@ namespace Delaunay
 			});
 		}
 
-		public List<Vector2> HullPointsInOrder ()
+		public List<Vector2> GetHullPointsInOrder ()
 		{
 			List<Edge> hullEdges = HullEdges ();
 			
@@ -176,16 +175,25 @@ namespace Delaunay
 			return points;
 		}
 		
-		public List<LineSegment> SpanningTree (KruskalType type = KruskalType.MINIMUM/*, BitmapData keepOutMask = null*/)
+		public List<LineSegment> GetSpanningTree (KruskalType type = KruskalType.MINIMUM/*, BitmapData keepOutMask = null*/)
 		{
 			List<Edge> edges = DelaunayHelpers.SelectNonIntersectingEdges (/*keepOutMask,*/_edges);
 			List<LineSegment> segments = DelaunayHelpers.DelaunayLinesForEdges (edges);
 			return DelaunayHelpers.Kruskal (segments, type);
 		}
 
+		/// <summary>
+		/// Returns the set of all sites touching the boundary of the entire region.
+		/// </summary>
+		public IEnumerable<Site> GetBoundarySites()
+		{
+			// TODO: !!!
+			return _sites.Where(site => site.edges);
+		}
+
 		public List<List<Vector2>> Regions ()
 		{
-			return _sites.Regions (_plotBounds);
+			return _sites.GetRegions (_plotBounds);
 		}
 		
 		public List<uint> SiteColors (/*BitmapData referenceImage = null*/)
@@ -424,7 +432,7 @@ namespace Delaunay
 				var newColors = new System.Collections.Generic.List<uint>();
 				for (var iSite = 0; iSite < Sites.Count; ++iSite) {
 					var site = voronoi.Sites[iSite];
-					var vertices = site.Region(_plotBounds);
+					var vertices = site.GetRegion(_plotBounds);
 					if (vertices.Count == 0) continue;
 
 					var centroid = vertices[0];

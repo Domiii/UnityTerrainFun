@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Delaunay.Geo;
 using Delaunay.Utils;
@@ -7,7 +8,7 @@ using Delaunay.Utils;
 namespace Delaunay
 {
 
-	public sealed class SiteList: Utils.IDisposable
+	public sealed class SiteList: Utils.IDisposable, IEnumerable<Site>
 	{
 		private List<Site> _sites;
 		private int _currentIndex;
@@ -133,13 +134,13 @@ namespace Delaunay
 			return circles;
 		}
 
-		public List<List<Vector2>> Regions (Rect plotBounds)
+		public List<List<Vector2>> GetRegions (Rect plotBounds)
 		{
 			List<List<Vector2>> regions = new List<List<Vector2>> ();
 			Site site;
 			for (int i = 0; i< _sites.Count; i++) {
 				site = _sites [i];
-				regions.Add (site.Region (plotBounds));
+				regions.Add (site.GetRegion (plotBounds));
 			}
 			return regions;
 		}
@@ -161,6 +162,16 @@ namespace Delaunay
 //			}
 //			return _sites[index].coord;
 		}
+
 		
+		public IEnumerator<Site> GetEnumerator()
+		{
+			return _sites.GetEnumerator();
+		}
+		
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+		{
+			return this.GetEnumerator();
+		}
 	}
 }

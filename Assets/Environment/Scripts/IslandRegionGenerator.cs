@@ -4,6 +4,8 @@ using System.Linq;
 using Delaunay;
 using Delaunay.Geo;
 
+
+[System.Serializable]
 public class IslandRegionDebugDraw {
 	
 	Voronoi m_voronoiRegions;
@@ -27,7 +29,7 @@ public class IslandRegionDebugDraw {
 			var position = site.Coord;
 			m_sitePoints.Add(RelativeVertex(position.x, 0, position.y));
 
-			var vertices = voronoiRegions.Region(position).Select (v => RelativeVertex(v.x, 0, v.y));
+			var vertices = voronoiRegions.GetRegion(site.id).Select (v => RelativeVertex(v.x, 0, v.y));
 			m_siteVertices.Add(new List<Vector3>(vertices));
 		}
 
@@ -85,11 +87,13 @@ public class IslandRegionDebugDraw {
 public class IslandRegionGenerator : MonoBehaviour {
 	public int m_siteCount = 100;
 
-	Vector2 m_dimensions;
-	Voronoi m_voronoiRegions;
-	List<LineSegment> m_voronoiEdges;
-	IslandRegionDebugDraw m_debugDraw;
-	TerrainSettings m_terrainSettings;
+	[HideInInspector] public Vector2 m_dimensions;
+	[HideInInspector] public Voronoi m_voronoiRegions;
+	[HideInInspector] public List<LineSegment> m_voronoiEdges;
+	
+	[HideInInspector] public TerrainSettings m_terrainSettings;
+	
+	[HideInInspector] public IslandRegionDebugDraw m_debugDraw;
 	
 	IslandRegionGenerator() {
 		m_terrainSettings = new TerrainSettings();
