@@ -10,12 +10,12 @@ namespace Delaunay
 	public sealed class Site: ICoord, IComparable
 	{
 		private static Stack<Site> _pool = new Stack<Site> ();
-		public static Site Create (Vector2 p, uint index, float weight, uint color, int id)
+		public static Site Create (Vector2 p, uint index, float weight, uint id)
 		{
 			if (_pool.Count > 0) {
-				return _pool.Pop ().Init (p, index, weight, color, id);
+				return _pool.Pop ().Init (p, index, weight, id);
 			} else {
-				return new Site (p, index, weight, color, id);
+				return new Site (p, index, weight, id);
 			}
 		}
 		
@@ -71,8 +71,7 @@ namespace Delaunay
 			get { return _coord;}
 		}
 
-		public int id { get; private set;}
-		public uint color { get; private set;}
+		public uint id { get; private set;}
 		public float weight;
 		
 		private uint _siteIndex;
@@ -87,22 +86,21 @@ namespace Delaunay
 		// ordered list of points that define the region clipped to bounds:
 		private List<Vector2> _region;
 
-		private Site (Vector2 p, uint index, float weight, uint color, int id)
+		private Site (Vector2 p, uint index, float weight, uint id)
 		{
 //			if (lock != PrivateConstructorEnforcer)
 //			{
 //				throw new Error("Site constructor is private");
 //			}
-			Init (p, index, weight, color, id);
+			Init (p, index, weight, id);
 		}
 		
-		private Site Init (Vector2 p, uint index, float weight, uint color, int id)
+		private Site Init (Vector2 p, uint index, float weight, uint id)
 		{
 			_coord = p;
 			_siteIndex = index;
 			this.id = id;
 			this.weight = weight;
-			this.color = color;
 			_edges = new List<Edge> ();
 			_region = null;
 			return this;

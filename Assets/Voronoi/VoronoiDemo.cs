@@ -30,23 +30,21 @@ public class VoronoiDemo : MonoBehaviour
 
 	public void Gen ()
 	{
-		List<uint> colors = new List<uint> ();
+		// generate set of random points
 		m_points = new List<Vector2> ();
-			
 		for (int i = 0; i < m_pointCount; i++) {
-			colors.Add (0);
 			m_points.Add (new Vector2 (
 					UnityEngine.Random.Range (0, m_mapWidth),
 					UnityEngine.Random.Range (0, m_mapHeight))
 			);
 		}
 
+		// generate voronoi region
 		if (m_voronoi != null) {
 			m_voronoi.Dispose();
 		}
-
-		m_voronoi = new Delaunay.Voronoi (m_points, colors, new Rect (0, 0, m_mapWidth, m_mapHeight));
-		m_edges = m_voronoi.VoronoiDiagram ();
+		m_voronoi = new Delaunay.Voronoi (m_points, new Rect (0, 0, m_mapWidth, m_mapHeight));
+		m_edges = m_voronoi.ComputeVoronoiDiagram ();
 			
 		//m_spanningTree = v.SpanningTree (KruskalType.MINIMUM);
 		//m_delaunayTriangulation = v.DelaunayTriangulation ();
@@ -59,7 +57,7 @@ public class VoronoiDemo : MonoBehaviour
 			Gen ();
 		}
 		m_voronoi = m_voronoi.Relax(nIterations);
-		m_edges = m_voronoi.VoronoiDiagram ();
+		m_edges = m_voronoi.ComputeVoronoiDiagram ();
 		Debug.Log ("Relax done!");
 	}
 

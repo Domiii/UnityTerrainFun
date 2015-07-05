@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Delaunay.Geo;
 using Delaunay.Utils;
 
@@ -89,26 +90,9 @@ namespace Delaunay
 			return new Rect (xmin, ymin, xmax - xmin, ymax - ymin);
 		}
 
-		public List<uint> SiteColors (/*BitmapData referenceImage = null*/)
+		public IEnumerable<Vector2> GetSiteCoords ()
 		{
-			List<uint> colors = new List<uint> ();
-			Site site;
-			for (int i = 0; i< _sites.Count; i++) {
-				site = _sites [i];
-				colors.Add (/*referenceImage ? referenceImage.getPixel(site.x, site.y) :*/site.color);
-			}
-			return colors;
-		}
-
-		public List<Vector2> SiteCoords ()
-		{
-			List<Vector2> coords = new List<Vector2> ();
-			Site site;
-			for (int i = 0; i<_sites.Count; i++) {
-				site = _sites [i];
-				coords.Add (site.Coord);
-			}
-			return coords;
+			return _sites.Select (site => site.Coord);
 		}
 
 		/**
@@ -117,7 +101,7 @@ namespace Delaunay
 		 * if the region is infinite, return a circle of radius 0.
 		 * 
 		 */
-		public List<Circle> Circles ()
+		public List<Circle> GetCircles ()
 		{
 			List<Circle> circles = new List<Circle> ();
 			Site site;

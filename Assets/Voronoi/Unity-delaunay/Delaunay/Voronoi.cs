@@ -39,47 +39,46 @@ namespace Delaunay
 		}
 
 		#region Construction + Initialization
-		public Voronoi (List<Vector2> points, List<uint> colors, Rect plotBounds)
+		public Voronoi (List<Vector2> points, Rect plotBounds)
 		{
-			Reset (points, colors, plotBounds);
+			Reset (points, plotBounds);
 		}
 
-		private void Reset(List<Vector2> points, List<uint> colors, Rect plotBounds)
+		private void Reset(List<Vector2> points, Rect plotBounds)
 		{
 			_sites = new SiteList ();
 			_sitesIndexedByLocation = new Dictionary <Vector2,Site> (); // XXX: Used to be Dictionary(true) -- weak refs. 
 			_sitesIndexedById = new List<Site>();
-			AddSites (points, colors);
+			AddSites (points);
 			_plotBounds = plotBounds;
 			_triangles = new List<Triangle> ();
 			_edges = new List<Edge> ();
 			FortunesAlgorithm ();
 		}
 		
-		private void AddSites (List<Vector2> points, List<uint> colors)
+		private void AddSites (List<Vector2> points)
 		{
 			int length = points.Count;
 			for (int i = 0; i < length; ++i) {
-				AddSite (points [i], (colors != null) ? colors [i] : 0, i);
+				AddSite (points [i], (uint)i);
 			}
 		}
 		
-		private void AddSite (Vector2 p, uint color, int index)
+		private void AddSite (Vector2 p, uint index)
 		{
 			if (_sitesIndexedByLocation.ContainsKey (p))
 				return; // Prevent duplicate site! (Adapted from https://github.com/nodename/as3delaunay/issues/1)
 			float weight = UnityEngine.Random.value * 100f;
-			var id = _sitesIndexedById.Count+1;
+			var id = (uint)(_sitesIndexedById.Count+1);
 
-			Site site = Site.Create (p, (uint)index, weight, color, id);
+			Site site = Site.Create (p, (uint)index, weight, id);
 			_sites.Add (site);
 			_sitesIndexedByLocation [p] = site;
-			_sitesIndexedById[id] = site;
+			_sitesIndexedById[(int)id] = site;
 		}
 		#endregion
 
 
-		// TODO: Change to property
 		public List<Edge> Edges
 		{
 			get { return _edges; }
@@ -94,30 +93,30 @@ namespace Delaunay
 		/// Get vertices of the site containing the given point.
 		/// </summary>
 		/// <param name="p"></param>
-		public List<Vector2> GetRegion (int id)
+		public List<Vector2> GetRegion (uint id)
 		{
 			if (_sitesIndexedById.Count <= id)
 				return new List<Vector2> ();
 
-			Site site = _sitesIndexedById[id];
+			Site site = _sitesIndexedById[(int)id];
 			return site.GetRegion (_plotBounds);
 		}
 
 		// TODO: bug: if you call this before you call region(), something goes wrong :(
-		public List<Site> GetNeighborSitesForSite (int id)
+		public List<Site> GetNeighborSitesForSite (uint id)
 		{
 			if (_sitesIndexedById.Count <= id)
 				return new List<Site> ();
 
-			Site site = _sitesIndexedById [id];
+			Site site = _sitesIndexedById [(int)id];
 			return site.GetNeighborSites ();
 		}
 
-		public List<Circle> Circles ()
+		public List<Circle> GetCircles ()
 		{
-			return _sites.Circles ();
+			return _sites.GetCircles ();
 		}
-		
+
 		public List<LineSegment> GetVoronoiBoundaryForSite (uint id)
 		{
 			return DelaunayHelpers.VisibleLineSegments (DelaunayHelpers.SelectEdgesForSitePoint (id, _edges));
@@ -128,22 +127,22 @@ namespace Delaunay
 			return DelaunayHelpers.DelaunayLinesForEdges (DelaunayHelpers.SelectEdgesForSitePoint (id, _edges));
 		}
 		
-		public List<LineSegment> VoronoiDiagram ()
+		public List<LineSegment> ComputeVoronoiDiagram ()
 		{
 			return DelaunayHelpers.VisibleLineSegments (_edges);
 		}
 		
-		public List<LineSegment> DelaunayTriangulation (/*BitmapData keepOutMask = null*/)
+		public List<LineSegment> ComputeDelaunayTriangulation (/*BitmapData keepOutMask = null*/)
 		{
 			return DelaunayHelpers.DelaunayLinesForEdges (DelaunayHelpers.SelectNonIntersectingEdges (/*keepOutMask,*/_edges));
 		}
 		
-		public List<LineSegment> Hull ()
+		public List<LineSegment> GetHullLineSegments ()
 		{
-			return DelaunayHelpers.DelaunayLinesForEdges (HullEdges ());
+			return DelaunayHelpers.DelaunayLinesForEdges (GetHullEdges ());
 		}
 		
-		private List<Edge> HullEdges ()
+		private List<Edge> GetHullEdges ()
 		{
 			return _edges.FindAll (delegate (Edge edge) {
 				return (edge.IsPartOfConvexHull ());
@@ -152,7 +151,7 @@ namespace Delaunay
 
 		public List<Vector2> GetHullPointsInOrder ()
 		{
-			List<Edge> hullEdges = HullEdges ();
+			List<Edge> hullEdges = GetHullEdges ();
 			
 			List<Vector2> points = new List<Vector2> ();
 			if (hullEdges.Count == 0) {
@@ -185,20 +184,14 @@ namespace Delaunay
 		/// <summary>
 		/// Returns the set of all sites touching the boundary of the entire region.
 		/// </summary>
-		public IEnumerable<Site> GetBoundarySites()
+		public IEnumerable<Edge> GetBoundarySites()
 		{
-			// TODO: !!!
-			return _sites.Where(site => site.edges);
+			return _sites.SelectMany(site => site.edges);
 		}
 
-		public List<List<Vector2>> Regions ()
+		public List<List<Vector2>> GetRegions ()
 		{
 			return _sites.GetRegions (_plotBounds);
-		}
-		
-		public List<uint> SiteColors (/*BitmapData referenceImage = null*/)
-		{
-			return _sites.SiteColors (/*referenceImage*/);
 		}
 		
 		/**
@@ -209,14 +202,14 @@ namespace Delaunay
 		 * @return coordinates of nearest Site to (x, y)
 		 * 
 		 */
-		public Nullable<Vector2> NearestSitePoint (/*BitmapData proximityMap,*/float x, float y)
+		public Nullable<Vector2> GetNearestSitePoint (/*BitmapData proximityMap,*/float x, float y)
 		{
 			return _sites.NearestSitePoint (/*proximityMap,*/x, y);
 		}
 		
-		public List<Vector2> SiteCoords ()
+		public IEnumerable<Vector2> GetSiteCoords ()
 		{
-			return _sites.SiteCoords ();
+			return _sites.GetSiteCoords ();
 		}
 
 
@@ -429,7 +422,6 @@ namespace Delaunay
 
 				// compute new points
 				var newPoints = new System.Collections.Generic.List<Vector2>();
-				var newColors = new System.Collections.Generic.List<uint>();
 				for (var iSite = 0; iSite < Sites.Count; ++iSite) {
 					var site = voronoi.Sites[iSite];
 					var vertices = site.GetRegion(_plotBounds);
@@ -442,11 +434,10 @@ namespace Delaunay
 					centroid /= vertices.Count;
 
 					newPoints.Add(centroid);
-					newColors.Add(site.color);
 				}
 
 				// re-compute the whole thing
-				voronoi = new Voronoi(newPoints, newColors, _plotBounds);
+				voronoi = new Voronoi(newPoints, _plotBounds);
 			}
 			return voronoi;
 		}
