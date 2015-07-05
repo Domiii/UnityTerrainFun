@@ -8,69 +8,89 @@ using Delaunay.Geo;
 [System.Serializable]
 public class IslandRegionDebugDraw {
 	
-	Voronoi m_voronoi;
-	Vector3 m_regionOffset;
-	List<Vector3> m_sitePoints;
+	IslandRegionGenerator m_islandRegionGenerator;
+
 	float m_sitePointSize;
-	Vector3[] m_boundaryVertices;
-	List<List<Vector3>> m_siteVertices;
+	List<Vector3> m_sitePoints;
+	/// <summary>
+	/// Set of vertices defining the region boundary hull.
+	/// </summary>
+	Vector3[] m_hullVertices;
+	/// <summary>
+	/// Set of all vertices touching the region boundary hull.
+	/// </summary>
+	Vector3[][] m_hullSiteVertices;
+	Vector3[][] m_siteVertices;
 
-	public IslandRegionDebugDraw(Voronoi voronoiRegions, List<LineSegment> voronoiEdges, Vector3 regionOffset) {
-		if (voronoiRegions == null) return;
+	public IslandRegionDebugDraw(IslandRegionGenerator islandRegionGenerator) {
+		m_islandRegionGenerator = islandRegionGenerator;
 
-		m_voronoi = voronoiRegions;
-		m_regionOffset = regionOffset;
-		m_sitePointSize = m_voronoi.plotBounds.width * .002f;
+		var voronoi = islandRegionGenerator.m_voronoi;
+
+		m_sitePointSize = voronoi.plotBounds.width * .005f;
 
 		m_sitePoints = new List<Vector3> ();
-		m_siteVertices = new List<List<Vector3>> ();
-		for (int i = 0; i < voronoiRegions.Sites.Count; i++) {
-			var site = voronoiRegions.Sites[i];
+		m_siteVertices = new Vector3[voronoi.Sites.Count][];
+		for (int i = 0; i < voronoi.Sites.Count; i++) {
+			var site = voronoi.Sites[i];
 			var position = site.Coord;
 			m_sitePoints.Add(RelativeVertex(position.x, 0, position.y));
 
-			var vertices = voronoiRegions.GetRegion(site.id).Select (v => RelativeVertex(v.x, 0, v.y));
-			m_siteVertices.Add(new List<Vector3>(vertices));
+			var vertices = voronoi.GetRegion(site.id).Select (v => RelativeVertex(v.x, 0, v.y));
+			m_siteVertices[i] = vertices.ToArray();
 		}
 
+		m_hullSiteVertices = islandRegionGenerator.m_hullSites.Select (site => {
+			var vertices = voronoi.GetRegion(site.id).Select (v => RelativeVertex(v.x, 0, v.y));
+			return vertices.ToArray();
+		}).ToArray();
+//		m_hullSiteVertices = islandRegionGenerator.m_delaunayHullSegments.Select(line => {
+//			return new [] {
+//				RelativeVertex(line.p0.Value.x, 0, line.p0.Value.y),
+//				RelativeVertex(line.p1.Value.x, 0, line.p1.Value.y)};
+//		}).ToArray();
+
 		var delta = .1f;
-		m_boundaryVertices = new Vector3[] {
+		m_hullVertices = new Vector3[] {
 			RelativeVertex(0-delta, 0, 0-delta),
-			RelativeVertex(0-delta, 0, m_voronoi.plotBounds.height+delta),
-			RelativeVertex(m_voronoi.plotBounds.width+delta, 0, m_voronoi.plotBounds.height+delta),
-			RelativeVertex(m_voronoi.plotBounds.width+delta, 0, 0-delta)
+			RelativeVertex(0-delta, 0, voronoi.plotBounds.height+delta),
+			RelativeVertex(voronoi.plotBounds.width+delta, 0, voronoi.plotBounds.height+delta),
+			RelativeVertex(voronoi.plotBounds.width+delta, 0, 0-delta)
 		};
 	}
 
 	private Vector3 RelativeVertex(float x, float y, float z) {
-		return new Vector3(x, y, z) + m_regionOffset;
+		return new Vector3(x, y, z) + m_islandRegionGenerator.RegionOffset + Vector3.up * 400;
 	}
 
 	public void Draw() {
 		if (m_sitePoints == null) return;
 
-		// draw initial points (red)
-		Gizmos.color = Color.red;
+		// draw initial points (white)
+		Gizmos.color = Color.white;
 		for (int i = 0; i < m_sitePoints.Count; i++) {
 			Gizmos.DrawSphere (m_sitePoints[i], m_sitePointSize);
 		}
 		
 		// draw voronoi diagram (white)
 		Gizmos.color = Color.white;
-		for (int i = 0; i< m_siteVertices.Count; i++) {
+		for (int i = 0; i< m_siteVertices.Length; i++) {
 			var vertices = m_siteVertices[i];
-			for (var j = 1; j < vertices.Count; ++j) {
+			for (var j = 1; j < vertices.Length; ++j) {
 				Gizmos.DrawLine (vertices[j-1], vertices[j]);
 			}
+			Gizmos.DrawLine (vertices[vertices.Length-1], vertices[0]);
 		}
-		
-		//			// draw one of the voronoi sites (red)
-		//			Gizmos.color = Color.red;
-		//			var vertices = m_voronoi.Region(m_points[12]);
-		//			for (var i = 1; i < vertices.Count; ++i) {
-		//				Gizmos.DrawLine ((Vector3)vertices[i-1], (Vector3)vertices[i]);
-		//			}
-		//			Gizmos.DrawLine ((Vector3)vertices[vertices.Count-1], (Vector3)vertices[0]);
+
+		// draw hull sites (blue)
+		Gizmos.color = Color.blue;
+		for (int i = 0; i< m_hullSiteVertices.Length; i++) {
+			var vertices = m_hullSiteVertices[i];
+			for (var j = 1; j < vertices.Length; ++j) {
+				Gizmos.DrawLine (vertices[j-1], vertices[j]);
+			}
+			Gizmos.DrawLine (vertices[vertices.Length-1], vertices[0]);
+		}
 		
 		// draw bounding box (yellow)
 //		Gizmos.color = Color.yellow;
@@ -87,25 +107,28 @@ public class IslandRegionDebugDraw {
 [System.Serializable]
 public class SiteData {
 	public readonly Site Site;
-	public readonly int DistanceFromBoundary;
+	[HideInInspector] public int DistanceFromBoundary;
 
-
-	public SiteData(Site site, int distanceFromBoundary) {
+	public SiteData(Site site) {
 		Site = site;
-		DistanceFromBoundary = distanceFromBoundary;
 	}
 }
 
 
 /// <see cref="http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/">For inspiration</see>
-[RequireComponent(typeof(Terrain))]
+[RequireComponent(typeof(Terrain), typeof(TerrainGenerator))]
 public class IslandRegionGenerator : MonoBehaviour {
 	public int m_siteCount = 100;
 
 	[HideInInspector] public Vector2 m_dimensions;
 	[HideInInspector] public Voronoi m_voronoi;
+	[HideInInspector] public Site[] m_hullSites;
+	/// <summary>
+	/// Additional data, stored by site id
+	/// </summary>
 	[HideInInspector] public SiteData[] m_siteData;
 	[HideInInspector] public List<LineSegment> m_voronoiEdges;
+	[HideInInspector] public List<LineSegment> m_delaunayHullSegments;
 	
 	[HideInInspector] public TerrainSettings m_terrainSettings;
 	
@@ -127,6 +150,12 @@ public class IslandRegionGenerator : MonoBehaviour {
 
 	void Update () {
 		
+	}
+
+	public Vector3 RegionOffset {
+		get {
+			return transform.position;
+		}
 	}
 
 	public void GenerateAll() {
@@ -160,20 +189,35 @@ public class IslandRegionGenerator : MonoBehaviour {
 		// 3. relax, to make regions a bit more uniform
 		m_voronoi = m_voronoi.Relax (1);
 
-		// 3b. Compute additional site data
+		// 4a. get sites defining the island boundary
+		m_hullSites = m_voronoi.GetHullSites ();
+		
+		// 4b. get dalaunay boundary
+		//m_delaunayHullSegments = m_voronoi.GetHullLineSegments ();
 
-		// 4. get edges for drawing
+		// 4c. get edges for drawing
 		m_voronoiEdges = m_voronoi.ComputeVoronoiDiagram ();
+
+		// 5. Initialize additional structure information
+		InitSiteData ();
 
 		// force a re-draw
 		m_debugDraw = null;
 	}
 
 	void InitSiteData() {
+		// create SiteData set
 		m_siteData = new SiteData[m_voronoi.Sites.Count];
-// TODO: Init!
-//		// compute every site's distance to the boundary, using Dynamic Programming, starting from boundary
-//		foreach (var site in m_voronoi.bou
+		foreach (var site in m_voronoi.Sites) {
+			m_siteData[site.id] = new SiteData(site);
+		}
+
+		// compute every site's distance to the boundary, using Dynamic Programming, starting from boundary
+
+		foreach (var site in m_hullSites) {
+			m_siteData[site.id].DistanceFromBoundary = 0;
+		}
+
 	}
 	
 	void OnDrawGizmos () {
@@ -181,9 +225,7 @@ public class IslandRegionGenerator : MonoBehaviour {
 			return;
 
 		if (m_debugDraw == null) {
-			var terrain = GetComponent<TerrainGenerator>();
-			Vector3 regionOffset = terrain.transform.position;
-			m_debugDraw = new IslandRegionDebugDraw(m_voronoi, m_voronoiEdges, regionOffset);
+			m_debugDraw = new IslandRegionDebugDraw(this);
 		}
 		m_debugDraw.Draw ();
 	}

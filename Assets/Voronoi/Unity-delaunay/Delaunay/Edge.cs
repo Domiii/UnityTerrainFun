@@ -128,6 +128,7 @@ namespace Delaunay
 		{
 			// draw a line connecting the input Sites for which the edge is a bisector:
 			return new LineSegment (leftSite.Coord, rightSite.Coord);
+			//return new LineSegment (leftVertex.Coord, rightVertex.Coord);
 		}
 
 		public LineSegment VoronoiEdge ()
@@ -209,20 +210,19 @@ namespace Delaunay
 		}
 			
 		// the two input Sites for which this Edge is a bisector:
-		private Dictionary<Side,Site> _sites;
 		public Site leftSite {
-			get{ return _sites [Side.LEFT];}
-			set{ _sites [Side.LEFT] = value;}
+			get;
+			private set;
 				
 		}
 		public Site rightSite {
-			get { return _sites [Side.RIGHT];}
-			set { _sites [Side.RIGHT] = value;}			
+			get;
+			private set;
 		}
 
 		public Site Site (Side leftRight)
 		{
-			return _sites [leftRight];
+			return leftRight == Side.LEFT ? leftSite : rightSite;
 		}
 			
 		private int _edgeIndex;
@@ -240,9 +240,8 @@ namespace Delaunay
 				_clippedVertices [Side.RIGHT] = null;
 				_clippedVertices = null;
 			}
-			_sites [Side.LEFT] = null;
-			_sites [Side.RIGHT] = null;
-			_sites = null;
+			leftSite = null;
+			rightSite = null;
 				
 			_pool.Push (this);
 		}
@@ -260,12 +259,11 @@ namespace Delaunay
 			
 		private void Init ()
 		{	
-			_sites = new Dictionary<Side,Site> ();
 		}
 			
 		public override string ToString ()
 		{
-			return "Edge " + _edgeIndex.ToString () + "; sites " + _sites [Side.LEFT].ToString () + ", " + _sites [Side.RIGHT].ToString ()
+			return "Edge " + _edgeIndex.ToString () + "; sites " + leftSite.ToString () + ", " + rightSite.ToString ()
 				+ "; endVertices " + ((_leftVertex != null) ? _leftVertex.vertexIndex.ToString () : "null") + ", "
 				+ ((_rightVertex != null) ? _rightVertex.vertexIndex.ToString () : "null") + "::";
 		}

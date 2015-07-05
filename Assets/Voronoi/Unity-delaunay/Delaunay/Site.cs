@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Delaunay.Geo;
 using Delaunay.LR;
 
@@ -85,6 +86,7 @@ namespace Delaunay
 		private List<Side> _edgeOrientations;
 		// ordered list of points that define the region clipped to bounds:
 		private List<Vector2> _region;
+		private bool _touchesHull;
 
 		private Site (Vector2 p, uint index, float weight, uint id)
 		{
@@ -107,10 +109,14 @@ namespace Delaunay
 		}
 
 		/// <summary>
-		/// Vertix set, as previously computed
+		/// Vertex set, as previously computed
 		/// </summary>
 		public List<Vector2> RegionCached {
 			get { return _region; }
+		}
+
+		public bool TouchesHull {
+			get { return _touchesHull; }
 		}
 		
 		public override string ToString ()
@@ -197,7 +203,8 @@ namespace Delaunay
 			}
 			if (_edgeOrientations == null) { 
 				ReorderEdges ();
-				_region = ClipToBounds (clippingBounds);
+				_region = ComputeVertexSet (clippingBounds);
+				// TODO: Why not store vertex set as polygon?
 				if ((new Polygon (_region)).Winding () == Winding.CLOCKWISE) {
 					_region.Reverse ();
 				}
@@ -215,9 +222,9 @@ namespace Delaunay
 			reorderer.Dispose ();
 		}
 		
-		private List<Vector2> ClipToBounds (Rect bounds)
+		private List<Vector2> ComputeVertexSet (Rect bounds)
 		{
-			List<Vector2> points = new List<Vector2> ();
+			_region = new List<Vector2> ();
 			int n = _edges.Count;
 			int i = 0;
 			Edge edge;
@@ -238,20 +245,22 @@ namespace Delaunay
 			if (edge.clippedEnds [SideHelper.Other (orientation)] == null) {
 				Debug.LogError ("XXX: Null detected when there should be a Vector2!");
 			}
-			points.Add ((Vector2)edge.clippedEnds [orientation]);
-			points.Add ((Vector2)edge.clippedEnds [SideHelper.Other (orientation)]);
-			
+			_region.Add ((Vector2)edge.clippedEnds [orientation]);
+			_region.Add ((Vector2)edge.clippedEnds [SideHelper.Other (orientation)]);
+
 			for (int j = i + 1; j < n; ++j) {
 				edge = _edges [j];
 				if (edge.visible == false) {
 					continue;
 				}
-				Connect (points, j, bounds);
+				Connect (_region, j, bounds);
 			}
 			// close up the polygon by adding another corner point of the bounds if needed:
-			Connect (points, i, bounds, true);
-			
-			return points;
+			Connect (_region, i, bounds, true);
+
+			// done computing vertex set, now check if any vertex touches the hull boundary
+			_touchesHull = _region.Any(v => BoundsCheck.Check(v, bounds) != 0);
+			return _region;
 		}
 		
 		private void Connect (List<Vector2> points, int j, Rect bounds, bool closingUp = false)
@@ -267,6 +276,7 @@ namespace Delaunay
 			if (!CloseEnough (rightPoint, newPoint)) {
 				// The points do not coincide, so they must have been clipped at the bounds;
 				// see if they are on the same border of the bounds:
+
 				if (rightPoint.x != newPoint.x
 					&& rightPoint.y != newPoint.y) {
 					// They are on different borders of the bounds;
@@ -276,6 +286,7 @@ namespace Delaunay
 					// around the bounds and included the smaller part rather than the larger)
 					int rightCheck = BoundsCheck.Check (rightPoint, bounds);
 					int newCheck = BoundsCheck.Check (newPoint, bounds);
+
 					float px, py;
 					if ((rightCheck & BoundsCheck.RIGHT) != 0) {
 						px = bounds.xMax;

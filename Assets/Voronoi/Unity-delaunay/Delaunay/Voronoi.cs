@@ -26,7 +26,7 @@ namespace Delaunay
 	{
 		private SiteList _sites;
 		private Dictionary <Vector2,Site> _sitesIndexedByLocation;
-		private List<Site> _sitesIndexedById;
+		private Site[] _sitesIndexedById;
 		private List<Triangle> _triangles;
 		private List<Edge> _edges;
 
@@ -48,7 +48,7 @@ namespace Delaunay
 		{
 			_sites = new SiteList ();
 			_sitesIndexedByLocation = new Dictionary <Vector2,Site> (); // XXX: Used to be Dictionary(true) -- weak refs. 
-			_sitesIndexedById = new List<Site>();
+			_sitesIndexedById = new Site[points.Count];
 			AddSites (points);
 			_plotBounds = plotBounds;
 			_triangles = new List<Triangle> ();
@@ -60,16 +60,16 @@ namespace Delaunay
 		{
 			int length = points.Count;
 			for (int i = 0; i < length; ++i) {
-				AddSite (points [i], (uint)i);
+				AddSite (points [i], (uint)i, (uint)i);		// for now, index and id happen to be the same
 			}
 		}
 		
-		private void AddSite (Vector2 p, uint index)
+		private void AddSite (Vector2 p, uint index, uint id)
 		{
 			if (_sitesIndexedByLocation.ContainsKey (p))
 				return; // Prevent duplicate site! (Adapted from https://github.com/nodename/as3delaunay/issues/1)
+
 			float weight = UnityEngine.Random.value * 100f;
-			var id = (uint)(_sitesIndexedById.Count+1);
 
 			Site site = Site.Create (p, (uint)index, weight, id);
 			_sites.Add (site);
@@ -88,6 +88,11 @@ namespace Delaunay
 		{
 			get { return _sites; }
 		}
+
+
+		public T[] CreateSiteArrayById<T>() {
+			return new T[_sites.Count];
+		}
           
 		/// <summary>
 		/// Get vertices of the site containing the given point.
@@ -95,7 +100,7 @@ namespace Delaunay
 		/// <param name="p"></param>
 		public List<Vector2> GetRegion (uint id)
 		{
-			if (_sitesIndexedById.Count <= id)
+			if (_sitesIndexedById.Length <= id)
 				return new List<Vector2> ();
 
 			Site site = _sitesIndexedById[(int)id];
@@ -105,7 +110,7 @@ namespace Delaunay
 		// TODO: bug: if you call this before you call region(), something goes wrong :(
 		public List<Site> GetNeighborSitesForSite (uint id)
 		{
-			if (_sitesIndexedById.Count <= id)
+			if (_sitesIndexedById.Length <= id)
 				return new List<Site> ();
 
 			Site site = _sitesIndexedById [(int)id];
@@ -148,14 +153,18 @@ namespace Delaunay
 				return (edge.IsPartOfConvexHull ());
 			});
 		}
-
-		public List<Vector2> GetHullPointsInOrder ()
+		
+		/// <summary>
+		/// Returns the set of all sites touching the convex hull of the delaunay graph, in order.
+		/// NOTE: This does not include all sites touching the boundary.
+		/// </summary>
+		public List<Site> GetConvexHullSitesInOrder ()
 		{
 			List<Edge> hullEdges = GetHullEdges ();
 			
-			List<Vector2> points = new List<Vector2> ();
+			List<Site> sites = new List<Site> ();
 			if (hullEdges.Count == 0) {
-				return points;
+				return sites;
 			}
 			
 			EdgeReorderer reorderer = new EdgeReorderer (hullEdges, VertexOrSite.SITE);
@@ -169,9 +178,20 @@ namespace Delaunay
 			for (int i = 0; i < n; ++i) {
 				Edge edge = hullEdges [i];
 				orientation = orientations [i];
-				points.Add (edge.Site (orientation).Coord);
+				sites.Add (edge.Site (orientation));
 			}
-			return points;
+			return sites;
+		}
+		
+		/// <summary>
+		/// Returns the set of all sites touching the boundary of the entire region, in no particular order.
+		/// </summary>
+		public Site[] GetHullSites ()
+		{
+			return _sites.Where (site => {
+				GetRegion(site.id); // make sure, vertices have been computed
+				return site.TouchesHull;
+			}).ToArray();
 		}
 		
 		public List<LineSegment> GetSpanningTree (KruskalType type = KruskalType.MINIMUM/*, BitmapData keepOutMask = null*/)
@@ -179,14 +199,6 @@ namespace Delaunay
 			List<Edge> edges = DelaunayHelpers.SelectNonIntersectingEdges (/*keepOutMask,*/_edges);
 			List<LineSegment> segments = DelaunayHelpers.DelaunayLinesForEdges (edges);
 			return DelaunayHelpers.Kruskal (segments, type);
-		}
-
-		/// <summary>
-		/// Returns the set of all sites touching the boundary of the entire region.
-		/// </summary>
-		public IEnumerable<Edge> GetBoundarySites()
-		{
-			return _sites.SelectMany(site => site.edges);
 		}
 
 		public List<List<Vector2>> GetRegions ()
@@ -300,7 +312,7 @@ namespace Delaunay
 					topSite = FortunesAlgorithm_rightRegion (rbnd);
 					// these three sites define a Delaunay triangle
 					// (not actually using these for anything...)
-					//_triangles.push(new Triangle(bottomSite, topSite, rightRegion(lbnd)));
+					//_triangles.Add(new Triangle(bottomSite, topSite, rightRegion(lbnd)));
 					
 					v = lbnd.vertex;
 					v.SetIndex ();
@@ -470,6 +482,73 @@ namespace Delaunay
 			}
 			//			_plotBounds = null;
 			_sitesIndexedByLocation = null;
+		}
+		#endregion
+
+
+		#region Graph Traversal
+		public VoronoiBFS<TNodeData> StartVoronoiBFS<TNodeData>(Action<SiteTraversalNode<TNodeData>> cb) {
+			// start with a random root
+			return new VoronoiBFS<TNodeData>(this, new [] {Sites[0]}, cb);
+		}
+
+		public VoronoiBFS<TNodeData> StartVoronoiBFS<TNodeData>(IEnumerable<Site> roots, Action<SiteTraversalNode<TNodeData>> cb) {
+			// start with a given set of roots
+			return new VoronoiBFS<TNodeData>(this, roots, cb);
+		}
+		
+		public class SiteTraversalNode<TData> {
+			public readonly Site site;
+			public readonly SiteTraversalNode<TData> parent;
+			public SiteTraversalNode<TData>[] children {
+				get;
+				internal set;
+			}
+			public TData nodeData;
+
+			internal SiteTraversalNode(SiteTraversalNode<TData> parent, Site site) {
+				this.parent = parent;
+				this.site = site;
+			}
+		}
+
+		public class VoronoiBFS<TNodeData> {
+			Voronoi voronoi;
+			Queue<SiteTraversalNode<TNodeData>> queue;
+			Action<SiteTraversalNode<TNodeData>> cb;
+
+			public SiteTraversalNode<TNodeData>[] nodesById {
+				get;
+				private set;
+			}
+
+			public VoronoiBFS(Voronoi voronoi, IEnumerable<Site> roots, Action<SiteTraversalNode<TNodeData>> cb) {
+				this.voronoi = voronoi;
+				queue = new Queue<SiteTraversalNode<TNodeData>>(roots.Select(site => new SiteTraversalNode<TNodeData>(null, site)));
+				this.cb = cb;
+				nodesById = voronoi.CreateSiteArrayById<SiteTraversalNode<TNodeData>>();
+				Traverse ();
+			}
+
+			void Traverse() {
+				while (queue.Count > 0) {
+					var current = queue.Dequeue();
+					if (nodesById[current.site.id] != null) continue; // already visited
+
+					// find all children
+					nodesById[current.site.id] = current;
+					var childSites = voronoi.GetNeighborSitesForSite(current.site.id);
+					current.children = childSites.Select(site => new SiteTraversalNode<TNodeData>(current, site)).ToArray();
+
+					// run cb
+					cb(current);
+
+					// add next batch of nodes to queue
+					foreach (var child in current.children) {
+						queue.Enqueue(child);
+					}
+				}
+			}
 		}
 		#endregion
 	}
