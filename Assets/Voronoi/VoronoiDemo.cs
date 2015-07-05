@@ -46,7 +46,7 @@ public class VoronoiDemo : MonoBehaviour
 		}
 
 		m_voronoi = new Delaunay.Voronoi (m_points, colors, new Rect (0, 0, m_mapWidth, m_mapHeight));
-		m_edges = m_voronoi.VoronoiDiagram ();
+		m_edges = m_voronoi.ComputeVoronoiDiagram ();
 			
 		//m_spanningTree = v.SpanningTree (KruskalType.MINIMUM);
 		//m_delaunayTriangulation = v.DelaunayTriangulation ();
@@ -59,7 +59,7 @@ public class VoronoiDemo : MonoBehaviour
 			Gen ();
 		}
 		m_voronoi = m_voronoi.Relax(nIterations);
-		m_edges = m_voronoi.VoronoiDiagram ();
+		m_edges = m_voronoi.ComputeVoronoiDiagram ();
 		Debug.Log ("Relax done!");
 	}
 

@@ -73,7 +73,6 @@ namespace Delaunay
 		#endregion
 
 
-		// TODO: Change to property
 		public List<Edge> Edges
 		{
 			get { return _edges; }
@@ -98,7 +97,7 @@ namespace Delaunay
 		}
 
 		// TODO: bug: if you call this before you call region(), something goes wrong :(
-		public List<Vector2> NeighborSitesForSite (Vector2 coord)
+		public List<Vector2> GetNeighborSitesForSite (Vector2 coord)
 		{
 			List<Vector2> points = new List<Vector2> ();
 			Site site = _sitesIndexedByLocation [coord];
@@ -114,46 +113,46 @@ namespace Delaunay
 			return points;
 		}
 
-		public List<Circle> Circles ()
+		public List<Circle> GetCircles ()
 		{
 			return _sites.Circles ();
 		}
 		
-		public List<LineSegment> VoronoiBoundaryForSite (Vector2 coord)
+		public List<LineSegment> GetVoronoiBoundaryForSite (Vector2 coord)
 		{
 			return DelaunayHelpers.VisibleLineSegments (DelaunayHelpers.SelectEdgesForSitePoint (coord, _edges));
 		}
 
-		public List<LineSegment> DelaunayLinesForSite (Vector2 coord)
+		public List<LineSegment> GetDelaunayLinesForSite (Vector2 coord)
 		{
 			return DelaunayHelpers.DelaunayLinesForEdges (DelaunayHelpers.SelectEdgesForSitePoint (coord, _edges));
 		}
 		
-		public List<LineSegment> VoronoiDiagram ()
+		public List<LineSegment> ComputeVoronoiDiagram ()
 		{
 			return DelaunayHelpers.VisibleLineSegments (_edges);
 		}
 		
-		public List<LineSegment> DelaunayTriangulation (/*BitmapData keepOutMask = null*/)
+		public List<LineSegment> ComputeDelaunayTriangulation (/*BitmapData keepOutMask = null*/)
 		{
 			return DelaunayHelpers.DelaunayLinesForEdges (DelaunayHelpers.SelectNonIntersectingEdges (/*keepOutMask,*/_edges));
 		}
 		
-		public List<LineSegment> Hull ()
+		public List<LineSegment> GetHullLineSegments ()
 		{
-			return DelaunayHelpers.DelaunayLinesForEdges (HullEdges ());
+			return DelaunayHelpers.DelaunayLinesForEdges (GetHullEdges ());
 		}
 		
-		private List<Edge> HullEdges ()
+		private List<Edge> GetHullEdges ()
 		{
 			return _edges.FindAll (delegate (Edge edge) {
 				return (edge.IsPartOfConvexHull ());
 			});
 		}
 
-		public List<Vector2> HullPointsInOrder ()
+		public List<Vector2> GetHullPointsInOrder ()
 		{
-			List<Edge> hullEdges = HullEdges ();
+			List<Edge> hullEdges = GetHullEdges ();
 			
 			List<Vector2> points = new List<Vector2> ();
 			if (hullEdges.Count == 0) {
