@@ -88,6 +88,11 @@ namespace Delaunay
 		{
 			get { return _sites; }
 		}
+		
+		public Site[] SitesById
+		{
+			get { return _sitesIndexedById; }
+		}
 
 
 		public T[] CreateSiteArrayById<T>() {
@@ -487,66 +492,69 @@ namespace Delaunay
 
 
 		#region Graph Traversal
-		public VoronoiBFS<TNodeData> StartVoronoiBFS<TNodeData>(Action<SiteTraversalNode<TNodeData>> cb) {
+		public VoronoiBFS<TNodeData> TraverseVoronoiBFS<TNodeData>(VoronoiBFS<TNodeData>.TraversalAction cb) {
 			// start with a random root
 			return new VoronoiBFS<TNodeData>(this, new [] {Sites[0]}, cb);
 		}
 
-		public VoronoiBFS<TNodeData> StartVoronoiBFS<TNodeData>(IEnumerable<Site> roots, Action<SiteTraversalNode<TNodeData>> cb) {
+		public VoronoiBFS<TNodeData> TraverseVoronoiBFS<TNodeData>(IEnumerable<Site> roots, VoronoiBFS<TNodeData>.TraversalAction cb) {
 			// start with a given set of roots
 			return new VoronoiBFS<TNodeData>(this, roots, cb);
 		}
 		
 		public class SiteTraversalNode<TData> {
 			public readonly Site site;
-			public readonly SiteTraversalNode<TData> parent;
-			public SiteTraversalNode<TData>[] children {
+			public SiteTraversalNode<TData>[] neighbors {
 				get;
 				internal set;
 			}
-			public TData nodeData;
+			public TData data;
 
-			internal SiteTraversalNode(SiteTraversalNode<TData> parent, Site site) {
-				this.parent = parent;
+			internal SiteTraversalNode(Site site) {
 				this.site = site;
 			}
 		}
 
 		public class VoronoiBFS<TNodeData> {
+			public delegate void TraversalAction(SiteTraversalNode<TNodeData> node, SiteTraversalNode<TNodeData> previous);
+
+
 			Voronoi voronoi;
 			Queue<SiteTraversalNode<TNodeData>> queue;
-			Action<SiteTraversalNode<TNodeData>> cb;
+			VoronoiBFS<TNodeData>.TraversalAction cb;
 
 			public SiteTraversalNode<TNodeData>[] nodesById {
 				get;
 				private set;
 			}
 
-			public VoronoiBFS(Voronoi voronoi, IEnumerable<Site> roots, Action<SiteTraversalNode<TNodeData>> cb) {
+			public VoronoiBFS(Voronoi voronoi, IEnumerable<Site> roots, VoronoiBFS<TNodeData>.TraversalAction cb) {
 				this.voronoi = voronoi;
-				queue = new Queue<SiteTraversalNode<TNodeData>>(roots.Select(site => new SiteTraversalNode<TNodeData>(null, site)));
+				queue = new Queue<SiteTraversalNode<TNodeData>>(roots.Select(site => new SiteTraversalNode<TNodeData>(site)));
 				this.cb = cb;
 				nodesById = voronoi.CreateSiteArrayById<SiteTraversalNode<TNodeData>>();
 				Traverse ();
 			}
 
 			void Traverse() {
+				SiteTraversalNode<TNodeData> previous = null;
 				while (queue.Count > 0) {
 					var current = queue.Dequeue();
 					if (nodesById[current.site.id] != null) continue; // already visited
 
 					// find all children
 					nodesById[current.site.id] = current;
-					var childSites = voronoi.GetNeighborSitesForSite(current.site.id);
-					current.children = childSites.Select(site => new SiteTraversalNode<TNodeData>(current, site)).ToArray();
+					var neighborSites = voronoi.GetNeighborSitesForSite(current.site.id);
+					current.neighbors = neighborSites.Select(site => new SiteTraversalNode<TNodeData>(site)).ToArray();
 
 					// run cb
-					cb(current);
+					cb(current, previous);
 
 					// add next batch of nodes to queue
-					foreach (var child in current.children) {
+					foreach (var child in current.neighbors) {
 						queue.Enqueue(child);
 					}
+					previous = current;
 				}
 			}
 		}
