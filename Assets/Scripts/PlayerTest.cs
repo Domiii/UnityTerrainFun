@@ -33,5 +33,7 @@ public class PlayerTest : MonoBehaviour {
             body = bullet.AddComponent<Rigidbody>();
         }
         body.AddForce(ShootTransform.forward * ShootForce);
+
+        Destroy(bullet, 10);        // life-time of 10s
     }
 }

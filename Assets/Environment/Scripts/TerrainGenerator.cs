@@ -208,12 +208,12 @@ public class TerrainGenerator : MonoBehaviour
 				
 					if (noise > 0.0f) {
 						float rnd = Random.value;
-						//Randomly select what layer to use
-						if (rnd < 0.33f)
+                        //Randomly select what layer to use
+                        if (rnd < 0.33f && detailMaps.Length >= 1)
 							detailMaps[0][z, x] = 1;
-						else if (rnd < 0.66f)
+						else if (rnd < 0.66f && detailMaps.Length >= 2)
 							detailMaps[1][z, x] = 1;
-						else
+						else if (detailMaps.Length >= 3)
 							detailMaps[2][z, x] = 1;
 					}
 				}
