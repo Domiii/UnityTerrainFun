@@ -79,7 +79,7 @@ namespace Delaunay
 		
 		// the edges that define this Site's Voronoi region:
 		private List<Edge> _edges;
-		internal List<Edge> edges {
+		public List<Edge> edges {
 			get { return _edges;}
 		}
 		// which end of each edge hooks up with the previous edge in _edges:
