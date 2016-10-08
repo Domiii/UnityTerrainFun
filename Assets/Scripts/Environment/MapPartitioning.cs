@@ -22,8 +22,8 @@ public class SiteData {
 /// <see cref="http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/">For inspiration</see>
 [RequireComponent(typeof(Terrain), typeof(HeightMapGenerator))]
 [ExecuteInEditMode]
-public class IslandRegionGenerator : MonoBehaviour {
-	public int m_siteCount = 100;
+public class MapPartitioning : MonoBehaviour {
+	public int partitionCount = 100;
 
 	[HideInInspector] public Vector2 m_dimensions;
 	[HideInInspector] public Voronoi m_voronoi;
@@ -35,16 +35,12 @@ public class IslandRegionGenerator : MonoBehaviour {
 	[HideInInspector] public List<LineSegment> m_voronoiEdges;
 	[HideInInspector] public List<LineSegment> m_delaunayHullSegments;
 	
-	[HideInInspector] public TerrainSettings m_terrainSettings;
+	//[HideInInspector] public TerrainSettings m_terrainSettings;
 	
-	[HideInInspector] public IslandRegionDebugDraw m_debugDraw;
+	[HideInInspector] public MapDebugDraw m_debugDraw;
 	
-	IslandRegionGenerator() {
-		m_terrainSettings = new TerrainSettings();
-	}
-	
-	IslandRegionGenerator(TerrainSettings terrainSettings) {
-		m_terrainSettings = terrainSettings;
+	MapPartitioning() {
+		//m_terrainSettings = new TerrainSettings();
 	}
 
 	void Start () {
@@ -81,10 +77,10 @@ public class IslandRegionGenerator : MonoBehaviour {
 	}
 	
 	public void GeneratePoints(List<Vector2> points) {
-		for (int i = 0; i < m_siteCount; i++) {
+		for (int i = 0; i < partitionCount; i++) {
 			points.Add (new Vector2 (
-				UnityEngine.Random.Range (0, m_dimensions.x),
-				UnityEngine.Random.Range (0, m_dimensions.y))
+				Random.Range (0, m_dimensions.x),
+				Random.Range (0, m_dimensions.y))
 			              );
 		}
 	}
@@ -92,7 +88,7 @@ public class IslandRegionGenerator : MonoBehaviour {
 	public void GenerateRegions() {
 		List<Vector2> points = new List<Vector2> ();
 
-		m_dimensions = new Vector2(TerrainMgr.Instance.TerrainSize.TileWidth, TerrainMgr.Instance.TerrainSize.TileWidth);
+		m_dimensions = new Vector2(MapGenerator.Instance.terrainSize.tileSize, MapGenerator.Instance.terrainSize.tileSize);
 
 		// 1. generate points
 		GeneratePoints (points);
@@ -170,7 +166,7 @@ public class IslandRegionGenerator : MonoBehaviour {
 			return;
 
 		if (m_debugDraw == null) {
-			m_debugDraw = new IslandRegionDebugDraw(this);
+			m_debugDraw = new MapDebugDraw(this);
 		}
 		m_debugDraw.Draw ();
 	}

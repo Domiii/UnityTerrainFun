@@ -3,14 +3,14 @@ using System.Collections;
 using UnityEditor;
 using System.Collections.Generic;
 
-[CustomEditor(typeof(IslandRegionGenerator))]
-public class IslandRegionGeneratorEditor : Editor
+[CustomEditor(typeof(MapPartitioning))]
+public class MapPartitioningEditor : Editor
 {
 	public override void OnInspectorGUI()
 	{
 		DrawDefaultInspector();
 		
-		var script = (IslandRegionGenerator)target;
+		var script = (MapPartitioning)target;
 		
 		if(GUILayout.Button("Gen"))
 		{

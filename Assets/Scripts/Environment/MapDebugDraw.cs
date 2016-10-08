@@ -8,9 +8,9 @@ using System.Linq;
 
 
 [System.Serializable]
-public class IslandRegionDebugDraw {
+public class MapDebugDraw {
 
-	IslandRegionGenerator m_islandRegionGenerator;
+	MapPartitioning m_islandRegionGenerator;
 
 	/// Defines drawing options for one site
 	class SiteDraw {
@@ -27,7 +27,7 @@ public class IslandRegionDebugDraw {
 
 	private List<LineSegment> m_delaunayTriangulation;
 
-	public IslandRegionDebugDraw(IslandRegionGenerator islandRegionGenerator) {
+	public MapDebugDraw(MapPartitioning islandRegionGenerator) {
 		m_islandRegionGenerator = islandRegionGenerator;
 
 		var voronoi = islandRegionGenerator.m_voronoi;
