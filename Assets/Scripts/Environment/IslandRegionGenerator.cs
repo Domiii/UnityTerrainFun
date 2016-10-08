@@ -20,7 +20,7 @@ public class SiteData {
 
 
 /// <see cref="http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/">For inspiration</see>
-[RequireComponent(typeof(Terrain), typeof(TerrainGenerator))]
+[RequireComponent(typeof(Terrain), typeof(HeightMapGenerator))]
 [ExecuteInEditMode]
 public class IslandRegionGenerator : MonoBehaviour {
 	public int m_siteCount = 100;

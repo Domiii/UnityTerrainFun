@@ -5,7 +5,7 @@ using System.Collections.Generic;
 /// 
 /// </summary>
 /// <see cref="http://scrawkblog.com/2013/05/15/simple-procedural-terrain-in-unity/">Based on</see>
-public class TerrainGenerator : MonoBehaviour 
+public class HeightMapGenerator : MonoBehaviour 
 {
 	public TerrainSettings m_settings;
 	
@@ -14,12 +14,12 @@ public class TerrainGenerator : MonoBehaviour
 	Terrain m_terrain;
 	PerlinNoise m_groundNoise, m_mountainNoise, m_treeNoise, m_detailNoise;
 	
-	public TerrainGenerator() {
+	public HeightMapGenerator() {
 		m_settings = new TerrainSettings ();
 		//m_tilePos = new IntVector2 (0, 0);
 	}
 	
-	public TerrainGenerator(TerrainSettings settings) {
+	public HeightMapGenerator(TerrainSettings settings) {
 		m_settings = settings;
 		//m_tilePos = tilePos;
 	}

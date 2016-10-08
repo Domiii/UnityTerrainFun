@@ -2,14 +2,14 @@ using UnityEngine;
 using System.Collections;
 using UnityEditor;
 
-[CustomEditor(typeof(TerrainGenerator))]
+[CustomEditor(typeof(HeightMapGenerator))]
 public class TerrainGeneratorEditor : Editor
 {
 	public override void OnInspectorGUI()
 	{
 		DrawDefaultInspector();
 		
-		var script = (TerrainGenerator)target;
+		var script = (HeightMapGenerator)target;
 		
 		if(GUILayout.Button("Randomize"))
 		{

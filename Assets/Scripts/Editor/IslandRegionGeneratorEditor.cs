@@ -19,6 +19,7 @@ public class IslandRegionGeneratorEditor : Editor
 			// re-draw scene
 			//SceneView.RepaintAll();
 			SceneView.RepaintAll();
+			SceneView.RepaintAll();
 		}
 	}
 }
