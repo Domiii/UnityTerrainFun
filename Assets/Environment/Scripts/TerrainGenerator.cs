@@ -10,18 +10,18 @@ public class TerrainGenerator : MonoBehaviour
 	public TerrainSettings m_settings;
 	
 	//Private
-	IntVector2 m_tilePos;
+	//IntVector2 m_tilePos;
 	Terrain m_terrain;
 	PerlinNoise m_groundNoise, m_mountainNoise, m_treeNoise, m_detailNoise;
 	
 	public TerrainGenerator() {
 		m_settings = new TerrainSettings ();
-		m_tilePos = new IntVector2 (0, 0);
+		//m_tilePos = new IntVector2 (0, 0);
 	}
 	
-	public TerrainGenerator(TerrainSettings settings, IntVector2 tilePos) {
+	public TerrainGenerator(TerrainSettings settings) {
 		m_settings = settings;
-		m_tilePos = tilePos;
+		//m_tilePos = tilePos;
 	}
 	
 	void Start() {
@@ -206,15 +206,10 @@ public class TerrainGenerator : MonoBehaviour
 				
 					float noise = m_detailNoise.FractalNoise2D (worldPosX, worldPosZ, 3, m_settings.m_detailFrq, 1.0f);
 				
-					if (noise > 0.0f) {
-						float rnd = Random.value;
-                        //Randomly select what layer to use
-                        if (rnd < 0.33f && detailMaps.Length >= 1)
-							detailMaps[0][z, x] = 1;
-						else if (rnd < 0.66f && detailMaps.Length >= 2)
-							detailMaps[1][z, x] = 1;
-						else if (detailMaps.Length >= 3)
-							detailMaps[2][z, x] = 1;
+					if (noise > 0.0f && detailMaps.Length > 0) {
+						//Randomly select what layer to use
+						var layer = detailMaps[Random.Range(0, detailMaps.Length-1)];
+						layer[z, x] = 1;
 					}
 				}
 			}

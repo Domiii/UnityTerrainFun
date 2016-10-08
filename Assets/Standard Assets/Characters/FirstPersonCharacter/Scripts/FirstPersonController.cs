@@ -9,21 +9,8 @@ namespace UnityStandardAssets.Characters.FirstPerson
     [RequireComponent(typeof (CharacterController))]
     [RequireComponent(typeof (AudioSource))]
     public class FirstPersonController : MonoBehaviour
-	{
-		#region Singleton
-		public static FirstPersonController Instance {
-			get;
-			private set;
-		}
-		
-		FirstPersonController() {
-			//if (Instance != null) throw new UnityException ("Tried to instantiate singleton more than once: "  + this);
-			Instance = this;
-		}
-		#endregion
-
-		public bool IsMouseControlOn;
-		[SerializeField] private bool m_IsWalking;
+    {
+        [SerializeField] private bool m_IsWalking;
         [SerializeField] private float m_WalkSpeed;
         [SerializeField] private float m_RunSpeed;
         [SerializeField] [Range(0f, 1f)] private float m_RunstepLenghten;
@@ -55,6 +42,11 @@ namespace UnityStandardAssets.Characters.FirstPerson
         private bool m_Jumping;
         private AudioSource m_AudioSource;
 
+		public bool IsMouseControlOn {
+			get;
+			set;
+		}
+
         // Use this for initialization
         private void Start()
         {
@@ -75,7 +67,10 @@ namespace UnityStandardAssets.Characters.FirstPerson
         // Update is called once per frame
         private void Update()
         {
-            RotateView();
+			if (IsMouseControlOn) {
+				RotateView ();
+			}
+
             // the jump state needs to read here to make sure it is not missed
             if (!m_Jump)
             {
@@ -116,7 +111,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
             // get a normal for the surface that is being touched to move along it
             RaycastHit hitInfo;
             Physics.SphereCast(transform.position, m_CharacterController.radius, Vector3.down, out hitInfo,
-                               m_CharacterController.height/2f);
+                               m_CharacterController.height/2f, Physics.AllLayers, QueryTriggerInteraction.Ignore);
             desiredMove = Vector3.ProjectOnPlane(desiredMove, hitInfo.normal).normalized;
 
             m_MoveDir.x = desiredMove.x*speed;
@@ -143,6 +138,8 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
             ProgressStepCycle(speed);
             UpdateCameraPosition(speed);
+
+            m_MouseLook.UpdateCursorLock();
         }
 
 
@@ -248,9 +245,6 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
         private void RotateView()
         {
-			if (!IsMouseControlOn)
-				return;
-
             m_MouseLook.LookRotation (transform, m_Camera.transform);
         }
 

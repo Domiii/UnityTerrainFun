@@ -13,8 +13,8 @@ public class VoronoiDemo : MonoBehaviour
 	private float m_mapHeight = 50;
 	private Voronoi m_voronoi = null;
 	private List<LineSegment> m_edges = null;
-	private List<LineSegment> m_spanningTree;
-	private List<LineSegment> m_delaunayTriangulation;
+	//private List<LineSegment> m_spanningTree;
+	//private List<LineSegment> m_delaunayTriangulation;
 
 	void Awake ()
 	{
@@ -91,25 +91,25 @@ public class VoronoiDemo : MonoBehaviour
 		     
 	     
 	    // draw Delaunay (magenta)
-		if (m_delaunayTriangulation != null) {
-			Gizmos.color = Color.magenta;
-			for (int i = 0; i< m_delaunayTriangulation.Count; i++) {
-				Vector2 left = (Vector2)m_delaunayTriangulation [i].p0;
-				Vector2 right = (Vector2)m_delaunayTriangulation [i].p1;
-				Gizmos.DrawLine ((Vector3)left, (Vector3)right);
-			}
-		}
+//		if (m_delaunayTriangulation != null) {
+//			Gizmos.color = Color.magenta;
+//			for (int i = 0; i< m_delaunayTriangulation.Count; i++) {
+//				Vector2 left = (Vector2)m_delaunayTriangulation [i].p0;
+//				Vector2 right = (Vector2)m_delaunayTriangulation [i].p1;
+//				Gizmos.DrawLine ((Vector3)left, (Vector3)right);
+//			}
+//		}
 		
 		// draw spanning tree (green)
-		if (m_spanningTree != null) {
-			Gizmos.color = Color.green;
-			for (int i = 0; i< m_spanningTree.Count; i++) {
-				LineSegment seg = m_spanningTree [i];				
-				Vector2 left = (Vector2)seg.p0;
-				Vector2 right = (Vector2)seg.p1;
-				Gizmos.DrawLine ((Vector3)left, (Vector3)right);
-			}
-		}
+//		if (m_spanningTree != null) {
+//			Gizmos.color = Color.green;
+//			for (int i = 0; i< m_spanningTree.Count; i++) {
+//				LineSegment seg = m_spanningTree [i];				
+//				Vector2 left = (Vector2)seg.p0;
+//				Vector2 right = (Vector2)seg.p1;
+//				Gizmos.DrawLine ((Vector3)left, (Vector3)right);
+//			}
+//		}
 
 		// draw bounding box (yellow)
 		Gizmos.color = Color.yellow;

@@ -44,6 +44,8 @@ public class GameMenu {
 }
 
 public class GameMgr : MonoBehaviour {
+	public FirstPersonController firstPersonController;
+
 	#region Singleton
 	public static GameMgr Instance {
 		get;
@@ -74,7 +76,7 @@ public class GameMgr : MonoBehaviour {
 			Menu.IsOpen = !Menu.IsOpen;
 
 			// toggle mouse control
-			FirstPersonController.Instance.IsMouseControlOn = !Menu.IsOpen;
+			firstPersonController.IsMouseControlOn = !Menu.IsOpen;
 		}
 	}
 
