@@ -4,47 +4,48 @@ using System.Linq;
 using Delaunay;
 using Delaunay.Geo;
 
-/// <summary>
-/// Data associated with each Voronoi Site.
-/// </summary>
-[System.Serializable]
-public class SiteData {
-	public readonly Site Site;
-	[HideInInspector] public int DistanceFromBoundary;
-	[HideInInspector] public Site[] NeighborSites;
+/**
+ * TODO:
+ * -> Generate points, using tile id as seed
+ * -> Always partition current set of tiles
+ * -> Create PolygonCollider2D and set points for each site
+ * -> Use OverlapPoint for determining containment of individual places
+ * 
+ * @see https://docs.unity3d.com/ScriptReference/PolygonCollider2D.html
+ * @see https://docs.unity3d.com/ScriptReference/Collider2D.OverlapPoint.html
+ */
 
-	public SiteData(Site site) {
-		Site = site;
-	}
-}
 
 
 /// <see cref="http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/">For inspiration</see>
-[RequireComponent(typeof(Terrain), typeof(HeightMapGenerator))]
-[ExecuteInEditMode]
 public class MapPartitioning : MonoBehaviour {
 	public int partitionCount = 100;
+	public MapCell CellPrefab;
 
-	[HideInInspector] public Vector2 m_dimensions;
-	[HideInInspector] public Voronoi m_voronoi;
-	[HideInInspector] public Site[] m_hullSites;
+	[HideInInspector] public Vector2 dimensions;
+	[HideInInspector] public Voronoi voronoi;
+	[HideInInspector] public Site[] hullSites;
+
 	/// <summary>
 	/// Additional data, stored by site id
 	/// </summary>
-	[HideInInspector] public SiteData[] m_siteData;
-	[HideInInspector] public List<LineSegment> m_voronoiEdges;
-	[HideInInspector] public List<LineSegment> m_delaunayHullSegments;
+	[HideInInspector] public MapCell[] cells;
+	[HideInInspector] public List<LineSegment> voronoiEdges;
+	[HideInInspector] public List<LineSegment> delaunayHullEdges;
 	
-	//[HideInInspector] public TerrainSettings m_terrainSettings;
+	//[HideInInspector] public TerrainSettings terrainSettings;
 	
-	[HideInInspector] public MapDebugDraw m_debugDraw;
-	
-	MapPartitioning() {
-		//m_terrainSettings = new TerrainSettings();
+	[HideInInspector] public MapDebugDraw debugDraw;
+
+
+	public MapGenerator Map {
+		get {
+			return transform.parent.GetComponent<MapGenerator> ();
+		}
 	}
 
 	void Start () {
-		if (m_voronoi == null) {
+		if (voronoi == null) {
 			GenerateAll();
 		}
 	}
@@ -79,8 +80,8 @@ public class MapPartitioning : MonoBehaviour {
 	public void GeneratePoints(List<Vector2> points) {
 		for (int i = 0; i < partitionCount; i++) {
 			points.Add (new Vector2 (
-				Random.Range (0, m_dimensions.x),
-				Random.Range (0, m_dimensions.y))
+				Random.Range (0, dimensions.x),
+				Random.Range (0, dimensions.y))
 			              );
 		}
 	}
@@ -88,42 +89,48 @@ public class MapPartitioning : MonoBehaviour {
 	public void GenerateRegions() {
 		List<Vector2> points = new List<Vector2> ();
 
-		m_dimensions = new Vector2(MapGenerator.Instance.terrainSize.tileSize, MapGenerator.Instance.terrainSize.tileSize);
+		dimensions = new Vector2(Map.terrainSize.tileSize, Map.terrainSize.tileSize);
 
 		// 1. generate points
 		GeneratePoints (points);
 
-		if (m_voronoi != null) {
-			m_voronoi.Dispose();
+		if (voronoi != null) {
+			voronoi.Dispose();
 		}
 
 		// 2. generate voronoi regions
-		m_voronoi = new Delaunay.Voronoi (points, new Rect (0, 0, m_dimensions.x, m_dimensions.y));
+		voronoi = new Delaunay.Voronoi (points, new Rect (0, 0, dimensions.x, dimensions.y));
 
 		// 3. relax, to make regions a bit more uniform
 		//m_voronoi = m_voronoi.Relax (1);
 
 		// 4a. get sites defining the island boundary
-		m_hullSites = m_voronoi.GetHullSites ();
+		hullSites = voronoi.GetHullSites ();
 		
 		// 4b. get dalaunay boundary
 		//m_delaunayHullSegments = m_voronoi.GetHullLineSegments ();
 
 		// 4c. get edges for drawing
-		m_voronoiEdges = m_voronoi.ComputeVoronoiDiagram ();
+		voronoiEdges = voronoi.ComputeVoronoiDiagram ();
 
 		// 5. Initialize additional structure information
 		InitSiteData ();
 
 		// force a re-draw
-		m_debugDraw = null;
+		debugDraw = null;
+	}
+
+	MapCell CreateCell(Site site) {
+		var cell = Instantiate (CellPrefab, transform) as MapCell;
+		cell.ResetCell (site);
+		return cell;
 	}
 
 	/// <summary>
 	/// Upon every node visited during the traversal, increase boundary distance by 1!
 	/// </summary>
-	void _PreprocessSite(Voronoi.SiteTraversalNode<SiteData> current, Voronoi.SiteTraversalNode<SiteData> previous) {
-		current.data = new SiteData (current.site);
+	void _PreprocessSites(Voronoi.SiteTraversalNode<MapCell> current, Voronoi.SiteTraversalNode<MapCell> previous) {
+		current.data = CreateCell(current.site);
 
 		// the next node's distance to the boundary is the min of all previous distances + 1
 		var visitedNeighbors = current.neighbors
@@ -137,12 +144,12 @@ public class MapPartitioning : MonoBehaviour {
 		else {
 			// current node is not a root
 			distance = visitedNeighbors
-				.Select (neighbor => neighbor.data.DistanceFromBoundary + 1)
+				.Select (neighbor => neighbor.data.distanceFromBoundary + 1)
 				.Min ();
 		}
 
-		current.data.DistanceFromBoundary = distance;
-		current.data.NeighborSites = current.neighbors.Select (neighborNode => neighborNode.site).ToArray();
+		current.data.distanceFromBoundary = distance;
+		current.data.neighborSites = current.neighbors.Select (neighborNode => neighborNode.site).ToArray();
 
 		if (current.site.id < 2) {
 			//	Debug.Log(current.site.id + ": " + string.Join (", ", current.site.GetNeighborSites().Select (neighborSite => neighborSite.id.ToString()).ToArray()));
@@ -151,8 +158,8 @@ public class MapPartitioning : MonoBehaviour {
 
 	void InitSiteData() {
 		// compute every site's distance to the boundary, using Dynamic Programming, starting from boundary
-		var roots = m_hullSites;
-		m_siteData = m_voronoi.TraverseVoronoiBFS<SiteData>(roots, _PreprocessSite)
+		var roots = hullSites;
+		cells = voronoi.TraverseVoronoiBFS<MapCell>(roots, _PreprocessSites)
 			.nodesById
 			.Select(node => node.data)
 			.ToArray();
@@ -162,13 +169,13 @@ public class MapPartitioning : MonoBehaviour {
 
 	#region Debug + Drawing
 	void OnDrawGizmos () {
-		if (m_voronoi == null)
+		if (voronoi == null)
 			return;
 
-		if (m_debugDraw == null) {
-			m_debugDraw = new MapDebugDraw(this);
+		if (debugDraw == null) {
+			debugDraw = new MapDebugDraw(this);
 		}
-		m_debugDraw.Draw ();
+		//debugDraw.Draw ();
 	}
 	#endregion
 }

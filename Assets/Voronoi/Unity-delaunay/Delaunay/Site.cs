@@ -85,7 +85,7 @@ namespace Delaunay
 		// which end of each edge hooks up with the previous edge in _edges:
 		private List<Side> _edgeOrientations;
 		// ordered list of points that define the region clipped to bounds:
-		private List<Vector2> _region;
+		private List<Vector2> _vertices;
 		private bool _touchesHull;
 
 		private Site (Vector2 p, uint index, float weight, uint id)
@@ -104,15 +104,15 @@ namespace Delaunay
 			this.id = id;
 			this.weight = weight;
 			_edges = new List<Edge> ();
-			_region = null;
+			_vertices = null;
 			return this;
 		}
 
 		/// <summary>
 		/// Vertex set, as previously computed
 		/// </summary>
-		public List<Vector2> RegionCached {
-			get { return _region; }
+		public List<Vector2> Vertices {
+			get { return _vertices; }
 		}
 
 		public bool TouchesHull {
@@ -147,9 +147,9 @@ namespace Delaunay
 				_edgeOrientations.Clear ();
 				_edgeOrientations = null;
 			}
-			if (_region != null) {
-				_region.Clear ();
-				_region = null;
+			if (_vertices != null) {
+				_vertices.Clear ();
+				_vertices = null;
 			}
 		}
 		
@@ -203,13 +203,13 @@ namespace Delaunay
 			}
 			if (_edgeOrientations == null) { 
 				ReorderEdges ();
-				_region = ComputeVertexSet (clippingBounds);
+				_vertices = ComputeVertexSet (clippingBounds);
 				// TODO: Why not store vertex set as polygon?
-				if ((new Polygon (_region)).Winding () == Winding.CLOCKWISE) {
-					_region.Reverse ();
+				if ((new Polygon (_vertices)).Winding () == Winding.CLOCKWISE) {
+					_vertices.Reverse ();
 				}
 			}
-			return _region;
+			return _vertices;
 		}
 		
 		private void ReorderEdges ()
@@ -224,7 +224,7 @@ namespace Delaunay
 		
 		private List<Vector2> ComputeVertexSet (Rect bounds)
 		{
-			_region = new List<Vector2> ();
+			_vertices = new List<Vector2> ();
 			int n = _edges.Count;
 			int i = 0;
 			Edge edge;
@@ -245,22 +245,22 @@ namespace Delaunay
 			if (edge.clippedEnds [SideHelper.Other (orientation)] == null) {
 				Debug.LogError ("XXX: Null detected when there should be a Vector2!");
 			}
-			_region.Add ((Vector2)edge.clippedEnds [orientation]);
-			_region.Add ((Vector2)edge.clippedEnds [SideHelper.Other (orientation)]);
+			_vertices.Add ((Vector2)edge.clippedEnds [orientation]);
+			_vertices.Add ((Vector2)edge.clippedEnds [SideHelper.Other (orientation)]);
 
 			for (int j = i + 1; j < n; ++j) {
 				edge = _edges [j];
 				if (edge.visible == false) {
 					continue;
 				}
-				Connect (_region, j, bounds);
+				Connect (_vertices, j, bounds);
 			}
 			// close up the polygon by adding another corner point of the bounds if needed:
-			Connect (_region, i, bounds, true);
+			Connect (_vertices, i, bounds, true);
 
 			// done computing vertex set, now check if any vertex touches the hull boundary
-			_touchesHull = _region.Any(v => BoundsCheck.Check(v, bounds) != 0);
-			return _region;
+			_touchesHull = _vertices.Any(v => BoundsCheck.Check(v, bounds) != 0);
+			return _vertices;
 		}
 		
 		private void Connect (List<Vector2> points, int j, Rect bounds, bool closingUp = false)

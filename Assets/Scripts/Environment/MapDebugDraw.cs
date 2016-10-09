@@ -30,7 +30,7 @@ public class MapDebugDraw {
 	public MapDebugDraw(MapPartitioning islandRegionGenerator) {
 		m_islandRegionGenerator = islandRegionGenerator;
 
-		var voronoi = islandRegionGenerator.m_voronoi;
+		var voronoi = islandRegionGenerator.voronoi;
 
 		//m_sitePointSize = voronoi.plotBounds.width * .005f;
 
@@ -138,9 +138,9 @@ public class MapDebugDraw {
 		for (int i = 0; i< m_siteDrawInfo.Length; i++) {
 			var drawInfo = m_siteDrawInfo[i];
 			var site = drawInfo.site;
-			var siteData = m_islandRegionGenerator.m_siteData[site.id];
+			var siteData = m_islandRegionGenerator.cells[site.id];
 
-			Gizmos.color = GetColor(siteData.DistanceFromBoundary);
+			Gizmos.color = GetColor(siteData.distanceFromBoundary);
 
 			var vertices = drawInfo.vertices;
 			for (var j = 1; j < vertices.Length; ++j) {

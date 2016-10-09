@@ -15,7 +15,7 @@ public class TerrainTile : MonoBehaviour {
 		}
 	}
 
-	public MapGenerator Generator {
+	public MapGenerator Map {
 		get {
 			return transform.parent.GetComponent<MapGenerator> ();
 		}
@@ -26,7 +26,7 @@ public class TerrainTile : MonoBehaviour {
 	/// </summary>
 	public float Size {
 		get {
-			return Generator.terrainSize.tileSize;
+			return Map.terrainSize.tileSize;
 		}
 	}
 
@@ -36,10 +36,12 @@ public class TerrainTile : MonoBehaviour {
 		var size = Size;
 		var xPos = (tileIndex.x-0.5f) * size;
 		var zPos = (tileIndex.y-0.5f) * size;
-		var p = transform.position = new Vector3 (xPos, Generator.baseHeight, zPos);
+		var p = transform.position = new Vector3 (xPos, Map.baseHeight, zPos);
 			
 		minPos = new Vector2 (p.x, p.z);
 		maxPos = new Vector2 (p.x + size, p.z + size);
+
+		gameObject.name = ToString ();
 	}
 	
 	void Start () {

@@ -58,8 +58,8 @@ public class HeightMapGenerator : MonoBehaviour
 		Clear ();
 
 		// Create noise generators
-		groundNoise = new PerlinNoise(heightSettings.m_terrainSeeds.m_groundSeed);
-		mountainNoise = new PerlinNoise(heightSettings.m_terrainSeeds.m_mountainSeed);
+		groundNoise = new PerlinNoise(heightSettings.m_terrainSeeds.groundSeed);
+		mountainNoise = new PerlinNoise(heightSettings.m_terrainSeeds.mountainSeed);
 
 		// sanity checks!
 		if(!Mathf.IsPowerOfTwo(terrainSize.HeightMapSize-1))

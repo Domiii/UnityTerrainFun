@@ -158,7 +158,6 @@ public class MapGenerator : MonoBehaviour {
 	void CenterTilesAroundPivot() {
 		var p = pivot.position;
 		var pivotTileIndex = GetTileIndex(p.x, p.z);
-		print (pivotTileIndex.x);
 		var pivotTile = GetTile (pivotTileIndex);
 		if (pivotTile != CenterTile) {
 			// pivot not on center tile -> Shift the whole thing!

@@ -119,11 +119,11 @@ public class TerrainSize {
 
 [System.Serializable]
 public class TerrainSeeds {
-	public int ControlSeed;
-	[HideInInspector] public int m_groundSeed;
-	[HideInInspector] public int m_mountainSeed;
-	[HideInInspector] public int m_treeSeed;
-	[HideInInspector] public int m_detailSeed;
+	public int masterSeed;
+	[HideInInspector] public int groundSeed;
+	[HideInInspector] public int mountainSeed;
+	[HideInInspector] public int treeSeed;
+	[HideInInspector] public int detailSeed;
 
 	public TerrainSeeds() {
 		Randomize ();
@@ -133,10 +133,10 @@ public class TerrainSeeds {
 	/// Generates an Ok-ish random seed: Multiply tick count with some large prime numbers
 	/// </summary>
 	public void Randomize() {
-		ControlSeed = System.Environment.TickCount;
-		m_detailSeed = (int)(ControlSeed * 334214467);
-		m_groundSeed = (int)(ControlSeed * 413158523);
-		m_mountainSeed = (int)(ControlSeed * 613651369);
-		m_treeSeed = (int)(ControlSeed * 961748927);
+		masterSeed = System.Environment.TickCount;
+		detailSeed = (int)(masterSeed * 334214467);
+		groundSeed = (int)(masterSeed * 413158523);
+		mountainSeed = (int)(masterSeed * 613651369);
+		treeSeed = (int)(masterSeed * 961748927);
 	}
 }
