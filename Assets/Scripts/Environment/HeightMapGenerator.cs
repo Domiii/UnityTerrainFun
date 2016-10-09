@@ -80,7 +80,7 @@ public class HeightMapGenerator : MonoBehaviour
 
 		terrainData.heightmapResolution = terrainSize.tileSize;
 		terrainData.SetHeights(0, 0, htmap);
-		terrainData.size = new Vector3(terrainSize.tileSize, terrainSize.tileSize, terrainSize.tileSize);
+		terrainData.size = new Vector3(terrainSize.tileSize, 1, terrainSize.tileSize);
 
 //		m_terrain.heightmapPixelError = m_settings.m_renderSettings.m_pixelMapError;
 //		m_terrain.basemapDistance = m_settings.m_renderSettings.m_baseMapDist;

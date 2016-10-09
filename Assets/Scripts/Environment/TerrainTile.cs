@@ -3,10 +3,17 @@ using System.Collections;
 
 [RequireComponent(typeof(Terrain))]
 public class TerrainTile : MonoBehaviour {
-	IntVector2 tileIndex;
+	public IntVector2 tileIndex;
 
 	Vector2 minPos;
 	Vector2 maxPos;
+
+
+	public IntVector2 TileIndex {
+		get {
+			return tileIndex;
+		}
+	}
 
 	public MapGenerator Generator {
 		get {
@@ -14,6 +21,9 @@ public class TerrainTile : MonoBehaviour {
 		}
 	}
 
+	/// <summary>
+	/// The Tile is a square where this size is the side-length
+	/// </summary>
 	public float Size {
 		get {
 			return Generator.terrainSize.tileSize;
@@ -23,8 +33,11 @@ public class TerrainTile : MonoBehaviour {
 	internal void ResetTile(IntVector2 tileIndex) {
 		this.tileIndex = tileIndex;
 
-		var p = transform.position;
 		var size = Size;
+		var xPos = (tileIndex.x-0.5f) * size;
+		var zPos = (tileIndex.y-0.5f) * size;
+		var p = transform.position = new Vector3 (xPos, Generator.baseHeight, zPos);
+			
 		minPos = new Vector2 (p.x, p.z);
 		maxPos = new Vector2 (p.x + size, p.z + size);
 	}
@@ -35,5 +48,10 @@ public class TerrainTile : MonoBehaviour {
 
 	void Update () {
 		
+	}
+
+	public override string ToString ()
+	{
+		return string.Format ("[TerrainTile ({0}, {1})]", TileIndex.x, TileIndex.y);
 	}
 }
