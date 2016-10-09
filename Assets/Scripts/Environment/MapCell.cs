@@ -46,6 +46,14 @@ public class MapCell : MonoBehaviour {
 		polygon = gameObject.GetComponent<PolygonCollider2D>();
 		polygon.SetPath (0, site.Vertices.ToArray ());
 
+		// TODO: Use a MeshCollider instead
+//		MeshCollider myMC = GetComponent<MeshCollider>();
+//		Mesh newMesh = new Mesh();
+//		newMesh.vertices  = newverts;
+//		newMesh.triangles = newtris;
+//		newMesh.RecalculateBounds();
+//		myMC.sharedMesh = newMesh;
+
 		gameObject.name = ToString ();
 	}
 
