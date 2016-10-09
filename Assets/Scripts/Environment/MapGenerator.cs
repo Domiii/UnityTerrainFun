@@ -5,8 +5,8 @@ using System.Collections.Generic;
 /// 
 /// </summary>
 public class MapGenerator : MonoBehaviour {
-	const int NBufferTiles = 1;
-	const int NTilesPerRow = 1 + 2 * NBufferTiles;
+	const int NBorderTiles = 1;
+	const int NTilesPerRow = 1 + 2 * NBorderTiles;
 
 	#region Singleton management
 	public static MapGenerator Instance {
@@ -48,13 +48,13 @@ public class MapGenerator : MonoBehaviour {
 	#region Tile Queries
 	public TerrainTile CenterTile {
 		get {
-			return tiles [NBufferTiles, NBufferTiles];
+			return tiles [NBorderTiles, NBorderTiles];
 		}
 	}
 
 	public IntVector2 GetTileIndex(float x, float z) {
-		var i = (int)((x / terrainSize.tileSize) + 0.5f);
-		var j = (int)((z / terrainSize.tileSize) + 0.5f);
+		var i = Mathf.RoundToInt((x / terrainSize.tileSize));
+		var j = Mathf.RoundToInt((z / terrainSize.tileSize));
 		return new IntVector2 (i, j);
 	}
 
@@ -70,25 +70,25 @@ public class MapGenerator : MonoBehaviour {
 	}
 
 	TerrainTile GetTileFromArray(int di, int dj) {
-		if (Mathf.Abs(di) <= NBufferTiles && Mathf.Abs(dj) <= NBufferTiles) {
-			return tiles[di+NBufferTiles, dj+NBufferTiles];
+		if (Mathf.Abs(di) <= NBorderTiles && Mathf.Abs(dj) <= NBorderTiles) {
+			return tiles[di+NBorderTiles, dj+NBorderTiles];
 		}
 		return null;
 	}
 
 	TerrainTile GetTileFromBuffer(int di, int dj) {
-		if (Mathf.Abs(di) <= NBufferTiles && Mathf.Abs(dj) <= NBufferTiles) {
-			return tileBuffer[di+NBufferTiles, dj+NBufferTiles];
+		if (Mathf.Abs(di) <= NBorderTiles && Mathf.Abs(dj) <= NBorderTiles) {
+			return tileBuffer[di+NBorderTiles, dj+NBorderTiles];
 		}
 		return null;
 	}
 
 	void PrintTiles() {
-		for (int j = -NBufferTiles; j <= NBufferTiles; j++) {
+		for (int j = -NBorderTiles; j <= NBorderTiles; j++) {
 			var row = new string[NTilesPerRow];
-			for (int i = -NBufferTiles; i <= NBufferTiles; i++) {
+			for (int i = -NBorderTiles; i <= NBorderTiles; i++) {
 				var tile = GetTileFromArray (i, j);
-				row [i + NBufferTiles] = tile.ToString();
+				row [i + NBorderTiles] = tile.ToString();
 			}
 			print (string.Join(", ", row));
 		}
@@ -112,13 +112,13 @@ public class MapGenerator : MonoBehaviour {
 
 	void CreateTiles() {
 		var center = currentCenterIndex;
-		for (var dy = - NBufferTiles; dy <= NBufferTiles; ++dy) {
+		for (var dy = - NBorderTiles; dy <= NBorderTiles; ++dy) {
 			var y = center.y + dy;
-			for (var dx = - NBufferTiles; dx <= NBufferTiles; ++dx) {
+			for (var dx = - NBorderTiles; dx <= NBorderTiles; ++dx) {
 				var x = center.x + dx;
 
-				var i = dx + NBufferTiles;
-				var j = dy + NBufferTiles;
+				var i = dx + NBorderTiles;
+				var j = dy + NBorderTiles;
 				var tile = tiles[i, j];
 				var data = terrainData [i, j];
 				if (tile == null) {
@@ -158,6 +158,7 @@ public class MapGenerator : MonoBehaviour {
 	void CenterTilesAroundPivot() {
 		var p = pivot.position;
 		var pivotTileIndex = GetTileIndex(p.x, p.z);
+		print (pivotTileIndex.x);
 		var pivotTile = GetTile (pivotTileIndex);
 		if (pivotTile != CenterTile) {
 			// pivot not on center tile -> Shift the whole thing!
@@ -174,9 +175,9 @@ public class MapGenerator : MonoBehaviour {
 
 	void ShiftTiles(int di, int dj) {
 		// Step #1: Move all surviving tiles
-		for (int j = -NBufferTiles; j <= NBufferTiles; j++) {
+		for (int j = -NBorderTiles; j <= NBorderTiles; j++) {
 			var fromJ = WrapCircularIndex(j, dj);
-			for (int i = -NBufferTiles; i <= NBufferTiles; i++) {
+			for (int i = -NBorderTiles; i <= NBorderTiles; i++) {
 				// TODO: Compute circular index correctly
 				// TODO: Move all tiles
 				var fromI = WrapCircularIndex(i, di);
@@ -187,12 +188,10 @@ public class MapGenerator : MonoBehaviour {
 			}
 		}
 
-		PrintTiles ();
-
 		// Step #2: Replace vanished tiles
-		for (int j = -NBufferTiles; j <= NBufferTiles; j++) {
+		for (int j = -NBorderTiles; j <= NBorderTiles; j++) {
 			var fromJ = j + dj;
-			for (int i = -NBufferTiles; i <= NBufferTiles; i++) {
+			for (int i = -NBorderTiles; i <= NBorderTiles; i++) {
 				var fromI = i + di;
 				var newTile = GetTileFromArray (fromI, fromJ);
 				if (newTile == null) {
@@ -207,13 +206,10 @@ public class MapGenerator : MonoBehaviour {
 
 		// copy the new configuration to buffer
 		UpdateTileBuffer ();
-
-		//PrintTiles ();
-		print("#############################################################################");
 	}
 
 	void MoveTile(TerrainTile tile, int di, int dj) {
-		tiles[di + NBufferTiles, dj + NBufferTiles] = tile;
+		tiles[di + NBorderTiles, dj + NBorderTiles] = tile;
 	}
 
 	void UpdateTileBuffer () {
@@ -225,11 +221,11 @@ public class MapGenerator : MonoBehaviour {
 	}
 
 	int WrapCircularIndex(int ri, int di) {
-		var i = (ri + di + NBufferTiles) % NTilesPerRow;
+		var i = (ri + di + NBorderTiles) % NTilesPerRow;
 		if (i < 0) {
 			i = NTilesPerRow + i;
 		}
-		return i - NBufferTiles;
+		return i - NBorderTiles;
 	}
 	#endregion
 }
