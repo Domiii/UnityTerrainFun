@@ -7,8 +7,16 @@ public class PerlinNoise
 	int[] m_perm = new int[B+B];
 	System.Random m_random;
 
+	public PerlinNoise()
+	{
+	}
+
 	public PerlinNoise(int seed)
 	{
+		Reset (seed);
+	}
+
+	public void Reset(int seed) {
 		m_random = new System.Random (seed);
 
 		int i, j, k;
@@ -24,12 +32,12 @@ public class PerlinNoise
 			m_perm[i] = m_perm[j];
 			m_perm[j] = k;
 		}
-	
+
 		for (i = 0 ; i < B; i++) 
 		{
 			m_perm[B + i] = m_perm[i];
 		}
-		
+
 	}
 	
 	float FADE(float t) { return t * t * t * ( t * ( t * 6.0f - 15.0f ) + 10.0f ); }

@@ -5,8 +5,8 @@ using System.Collections;
 public class TerrainTile : MonoBehaviour {
 	public IntVector2 tileIndex;
 
-	Vector2 minPos;
-	Vector2 maxPos;
+//	Vector2 minPos;
+//	Vector2 maxPos;
 
 
 	public IntVector2 TileIndex {
@@ -36,12 +36,17 @@ public class TerrainTile : MonoBehaviour {
 		var size = Size;
 		var xPos = (tileIndex.x-0.5f) * size;
 		var zPos = (tileIndex.y-0.5f) * size;
-		var p = transform.position = new Vector3 (xPos, Map.baseHeight, zPos);
+		transform.position = new Vector3 (xPos, Map.baseHeight, zPos);
 			
-		minPos = new Vector2 (p.x, p.z);
-		maxPos = new Vector2 (p.x + size, p.z + size);
+//		var p = transform.position;
+//		minPos = new Vector2 (p.x, p.z);
+//		maxPos = new Vector2 (p.x + size, p.z + size);
 
 		gameObject.name = ToString ();
+
+		// re-generate things
+		//SendMessage("Gen", SendMessageOptions.DontRequireReceiver);
+		GetComponent<HeightMapGenerator>().Gen();
 	}
 	
 	void Start () {

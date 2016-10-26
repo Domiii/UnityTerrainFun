@@ -17,7 +17,7 @@ public class TerrainGeneratorEditor : Editor
 		}
 		if(GUILayout.Button("Build"))
 		{
-			script.GenAll();
+			script.Gen();
 		}
 		if(GUILayout.Button("Clear"))
 		{

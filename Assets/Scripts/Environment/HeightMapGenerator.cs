@@ -5,6 +5,7 @@ using System.Collections.Generic;
 /// 
 /// </summary>
 /// <see cref="http://scrawkblog.com/2013/05/15/simple-procedural-terrain-in-unity/">Based on</see>
+/// Old version: https://github.com/Domiii/UnityTerrainFun/commit/3a38fe7da2ffe5cd21ac939213a203f22408e41e
 public class HeightMapGenerator : MonoBehaviour 
 {
 	// shared settings
@@ -18,6 +19,7 @@ public class HeightMapGenerator : MonoBehaviour
 	//IntVector2 m_tilePos;
 	Terrain terrain;
 	PerlinNoise groundNoise, mountainNoise; //treeNoise, detailNoise;
+	float[,] htmap;
 	
 	public HeightMapGenerator() {
 		//heightSettings = new TerrainSeeds ();
@@ -25,41 +27,58 @@ public class HeightMapGenerator : MonoBehaviour
 		//m_tilePos = new IntVector2 (0, 0);
 	}
 	
-	void Start() {
+	void Awake() {
 		terrain = GetComponent<Terrain>();
-		if (!IsGenerated()) {
-			GenAll ();
+		htmap = new float[terrainSize.HeightMapSize, terrainSize.HeightMapSize];
+		groundNoise = new PerlinNoise();
+		mountainNoise = new PerlinNoise();
+
+		InitNoise ();
+
+		if (!IsGenerated) {
+			//Gen ();
 		}
 	}
+
+	void InitNoise() {
+		groundNoise.Reset(heightSettings.terrainSeeds.groundSeed);
+		mountainNoise.Reset(heightSettings.terrainSeeds.mountainSeed);
+	}
 	
-	public bool IsGenerated() {
-		return terrain && terrain.terrainData;
+	public bool IsGenerated {
+		get {
+			return terrain && terrain.terrainData;
+		}
 	}
 	
 	/// <summary>
 	/// Randomize the seeds, so the next terrain will actually look different
 	/// </summary>
 	public void Randomize() {
-		heightSettings.m_terrainSeeds.Randomize ();
+		heightSettings.terrainSeeds.Randomize ();
+		InitNoise ();
 	}
 	
 	public void Clear() {
 		terrain = GetComponent<Terrain>();
-		
-		// destroy existing terrain data
-		if (terrain.terrainData) {
-			DestroyImmediate(terrain.terrainData);
-			terrain.terrainData = null;
+		ClearHeights ();
+	}
+
+	void ClearHeights() {
+
+		for(int x = 0; x < terrainSize.HeightMapSize; x++)
+		{
+			for(int z = 0; z < terrainSize.HeightMapSize; z++)
+			{
+				htmap[z,x] = 0;
+			}
 		}
 	}
 	
-	public void GenAll() {
-		terrain = GetComponent<Terrain>();
+	public void Gen() {
 		Clear ();
 
-		// Create noise generators
-		groundNoise = new PerlinNoise(heightSettings.m_terrainSeeds.groundSeed);
-		mountainNoise = new PerlinNoise(heightSettings.m_terrainSeeds.mountainSeed);
+		// re-seed noise generators
 
 		// sanity checks!
 		if(!Mathf.IsPowerOfTwo(terrainSize.HeightMapSize-1))
@@ -68,22 +87,23 @@ public class HeightMapGenerator : MonoBehaviour
 			terrainSize.tileSize = Mathf.ClosestPowerOfTwo(terrainSize.HeightMapSize)+1;
 		}
 		
-		float[,] htmap = new float[terrainSize.HeightMapSize, terrainSize.HeightMapSize];
-		
 		// compute heigh maps
 		GenHeights(htmap);
 
 		
 		// start generating terrain data
-		TerrainData terrainData = terrain.terrainData = new TerrainData();
+		TerrainData terrainData = terrain.terrainData;
+		if (terrainData == null) {
+			terrainData = terrain.terrainData = new TerrainData();
+		}
 		GetComponent<TerrainCollider> ().terrainData = terrain.terrainData;	// also set collider's data
 
 		terrainData.heightmapResolution = terrainSize.tileSize;
 		terrainData.SetHeights(0, 0, htmap);
-		terrainData.size = new Vector3(terrainSize.tileSize, 1, terrainSize.tileSize);
+		terrainData.size = new Vector3(terrainSize.tileSize, terrainSize.maxHeight, terrainSize.tileSize);
 
-//		m_terrain.heightmapPixelError = m_settings.m_renderSettings.m_pixelMapError;
-//		m_terrain.basemapDistance = m_settings.m_renderSettings.m_baseMapDist;
+		terrain.heightmapPixelError = heightSettings.pixelMapError;
+		terrain.basemapDistance = heightSettings.baseMapDist;
 	}
 	
 	void GenHeights(float[,] htmap)
@@ -94,14 +114,14 @@ public class HeightMapGenerator : MonoBehaviour
 		{
 			for(int z = 0; z < terrainSize.HeightMapSize; z++)
 			{
-				float worldPosX = (x)*ratio;
-				float worldPosZ = (z)*ratio;
+				float worldPosX = (transform.position.x + x)*ratio;
+				float worldPosZ = (transform.position.z + z)*ratio;
 				
 				float mountains = Mathf.Max(0.0f, mountainNoise.FractalNoise2D(worldPosX, worldPosZ, 6, heightSettings.mountainFrq, 0.8f));
 				
 				float plain = groundNoise.FractalNoise2D(worldPosX, worldPosZ, 4, heightSettings.groundFrq, 0.1f) + 0.1f;
 				
-				htmap[z,x] = plain+mountains;
+				htmap[z,x] = plain + mountains;
 			}
 		}
 	}

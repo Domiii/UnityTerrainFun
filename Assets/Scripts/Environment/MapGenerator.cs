@@ -146,12 +146,6 @@ public class MapGenerator : MonoBehaviour {
 		return tile;
 	}
 
-	void ResetTile(TerrainTile tile, IntVector2 tileIndex) {
-		tile.ResetTile (tileIndex);
-
-		// TODO: Recompute TerrainData and everything that is on the Terrain!
-	}
-
 	/// <summary>
 	/// Updates all tiles to make sure we see the tiles currently surrounding the pivot
 	/// </summary>
@@ -225,6 +219,14 @@ public class MapGenerator : MonoBehaviour {
 			i = NTilesPerRow + i;
 		}
 		return i - NBorderTiles;
+	}
+	#endregion
+
+	#region Tile Config
+	void ResetTile(TerrainTile tile, IntVector2 tileIndex) {
+		tile.ResetTile (tileIndex);
+
+		// TODO: Recompute TerrainData and everything that is on the Terrain!
 	}
 	#endregion
 }
