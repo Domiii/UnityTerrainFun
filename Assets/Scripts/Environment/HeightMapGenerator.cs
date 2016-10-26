@@ -93,9 +93,9 @@ public class HeightMapGenerator : MonoBehaviour
 		}
 		GetComponent<TerrainCollider> ().terrainData = terrain.terrainData;	// also set collider's data
 
-		terrainData.heightmapResolution = terrainSize.tileSize;
+		terrainData.heightmapResolution = terrainSize.HeightMapSize;
 		terrainData.SetHeights(0, 0, htmap);
-		terrainData.size = new Vector3(terrainSize.tileSize, terrainSize.maxHeight, terrainSize.tileSize);
+		terrainData.size = new Vector3(terrainSize.HeightMapSize, terrainSize.maxHeight, terrainSize.HeightMapSize);
 
 		terrain.heightmapPixelError = heightSettings.pixelMapError;
 		terrain.basemapDistance = heightSettings.baseMapDist;
