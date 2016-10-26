@@ -26,21 +26,12 @@ public class HeightMapGenerator : MonoBehaviour
 		heightSettings = new TerrainHeightSettings();
 		//m_tilePos = new IntVector2 (0, 0);
 	}
-	
-	void Awake() {
-		terrain = GetComponent<Terrain>();
-		htmap = new float[terrainSize.HeightMapSize, terrainSize.HeightMapSize];
-		groundNoise = new PerlinNoise();
-		mountainNoise = new PerlinNoise();
-
-		InitNoise ();
-
-		if (!IsGenerated) {
-			//Gen ();
-		}
-	}
 
 	void InitNoise() {
+		if (groundNoise == null) {
+			groundNoise = new PerlinNoise ();
+			mountainNoise = new PerlinNoise ();
+		}
 		groundNoise.Reset(heightSettings.terrainSeeds.groundSeed);
 		mountainNoise.Reset(heightSettings.terrainSeeds.mountainSeed);
 	}
@@ -65,7 +56,9 @@ public class HeightMapGenerator : MonoBehaviour
 	}
 
 	void ClearHeights() {
-
+		if (htmap == null) {
+			htmap = new float[terrainSize.HeightMapSize, terrainSize.HeightMapSize];
+		}
 		for(int x = 0; x < terrainSize.HeightMapSize; x++)
 		{
 			for(int z = 0; z < terrainSize.HeightMapSize; z++)
@@ -77,6 +70,8 @@ public class HeightMapGenerator : MonoBehaviour
 	
 	public void Gen() {
 		Clear ();
+
+		InitNoise ();
 
 		// re-seed noise generators
 

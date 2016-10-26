@@ -26,7 +26,7 @@ public class MapGenerator : MonoBehaviour {
 	public Transform pivot;
 	public TerrainTile tilePrefab;
 	public TerrainSize terrainSize = new TerrainSize();
-	public TerrainSeeds terrainSeeds = new TerrainSeeds();
+	public TerrainHeightSettings heightSettings = new TerrainHeightSettings();
 	public float baseHeight = 0;
 
 	IntVector2 currentCenterIndex;
@@ -136,10 +136,6 @@ public class MapGenerator : MonoBehaviour {
 		var collider = tile.GetComponent<TerrainCollider> ();
 		terrain.terrainData = collider.terrainData = data;
 
-		// set size
-		data.heightmapResolution = terrainSize.tileSize;
-		data.size = new Vector3(terrainSize.tileSize, 1, terrainSize.tileSize);
-
 		// reset tile
 		ResetTile (tile, new IntVector2(i, j));
 
@@ -224,6 +220,10 @@ public class MapGenerator : MonoBehaviour {
 
 	#region Tile Config
 	void ResetTile(TerrainTile tile, IntVector2 tileIndex) {
+		var gen = tile.GetComponent<HeightMapGenerator> ();
+		gen.terrainSize = terrainSize;
+		gen.heightSettings = heightSettings;
+
 		tile.ResetTile (tileIndex);
 
 		// TODO: Recompute TerrainData and everything that is on the Terrain!
